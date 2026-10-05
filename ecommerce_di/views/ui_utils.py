@@ -106,19 +106,19 @@ def kpi_card(title: str, value: str, subtitle: str = "", delta_html: str = "",
              icon: str = "📊", accent: str = COLORS["primary"]):
     html = f"""
 <div style="
-    background: linear-gradient(135deg,rgba(30,30,60,0.85),rgba(20,20,45,0.9));
-    border: 1px solid rgba(99,102,241,0.2);
-    border-left: 3px solid {accent};
-    border-radius: 12px;
-    padding: 18px 20px 14px;
-    margin-bottom: 4px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+background: linear-gradient(135deg,rgba(30,30,60,0.85),rgba(20,20,45,0.9));
+border: 1px solid rgba(99,102,241,0.2);
+border-left: 3px solid {accent};
+border-radius: 12px;
+padding: 18px 20px 14px;
+margin-bottom: 4px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 ">
-    <div style="font-size:1.4rem;margin-bottom:4px">{icon}</div>
-    <div style="color:#94a3b8;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">{title}</div>
-    <div style="color:#f1f5f9;font-size:1.55rem;font-weight:700;line-height:1.1">{value}</div>
-    {f'<div style="margin-top:6px">{delta_html}</div>' if delta_html else ''}
-    {f'<div style="color:#64748b;font-size:0.7rem;margin-top:3px">{subtitle}</div>' if subtitle else ''}
+<div style="font-size:1.4rem;margin-bottom:4px">{icon}</div>
+<div style="color:#94a3b8;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">{title}</div>
+<div style="color:#f1f5f9;font-size:1.55rem;font-weight:700;line-height:1.1">{value}</div>
+{f'<div style="margin-top:6px">{delta_html}</div>' if delta_html else ''}
+{f'<div style="color:#64748b;font-size:0.7rem;margin-top:3px">{subtitle}</div>' if subtitle else ''}
 </div>
 """
     st.markdown(html, unsafe_allow_html=True)
@@ -129,8 +129,8 @@ def kpi_card(title: str, value: str, subtitle: str = "", delta_html: str = "",
 def section_header(title: str, subtitle: str = ""):
     html = f"""
 <div style="margin: 24px 0 16px">
-    <h3 style="color:#e2e8f0;margin:0;font-size:1.1rem;font-weight:600">{title}</h3>
-    {f'<p style="color:#64748b;font-size:0.8rem;margin:2px 0 0">{subtitle}</p>' if subtitle else ''}
+<h3 style="color:#e2e8f0;margin:0;font-size:1.1rem;font-weight:600">{title}</h3>
+{f'<p style="color:#64748b;font-size:0.8rem;margin:2px 0 0">{subtitle}</p>' if subtitle else ''}
 </div>
 """
     st.markdown(html, unsafe_allow_html=True)
@@ -141,13 +141,13 @@ def section_header(title: str, subtitle: str = ""):
 def empty_state(message: str, icon: str = "📭"):
     html = f"""
 <div style="
-    text-align:center;padding:48px 24px;
-    background:rgba(30,30,60,0.5);
-    border:1px dashed rgba(99,102,241,0.2);
-    border-radius:12px;margin:16px 0;
+text-align:center;padding:48px 24px;
+background:rgba(30,30,60,0.5);
+border:1px dashed rgba(99,102,241,0.2);
+border-radius:12px;margin:16px 0;
 ">
-    <div style="font-size:2.5rem;margin-bottom:12px">{icon}</div>
-    <div style="color:#64748b;font-size:0.9rem">{message}</div>
+<div style="font-size:2.5rem;margin-bottom:12px">{icon}</div>
+<div style="color:#64748b;font-size:0.9rem">{message}</div>
 </div>
 """
     st.markdown(html, unsafe_allow_html=True)
@@ -161,10 +161,10 @@ def alert_banner(msg: str, kind: str = "warning"):
     color = color_map.get(kind, "#6366f1")
     html = f"""
 <div style="
-    background: rgba(0,0,0,0.3);
-    border-left: 3px solid {color};
-    border-radius: 6px;padding: 10px 14px;
-    margin:8px 0;color:#e2e8f0;font-size:0.85rem;
+background: rgba(0,0,0,0.3);
+border-left: 3px solid {color};
+border-radius: 6px;padding: 10px 14px;
+margin:8px 0;color:#e2e8f0;font-size:0.85rem;
 ">{msg}</div>
 """
     st.markdown(html, unsafe_allow_html=True)
