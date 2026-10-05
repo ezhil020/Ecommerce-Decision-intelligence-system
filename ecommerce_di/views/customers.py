@@ -9,7 +9,7 @@ from analytics.customers import (
     get_customer_overview, get_customer_revenue, get_customer_segmentation,
     get_geographic_analysis, get_demographic_analysis, get_membership_analysis,
 )
-from pages.ui_utils import (
+from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state,
 )

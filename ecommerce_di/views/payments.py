@@ -9,7 +9,7 @@ from analytics.payments import (
     get_payment_overview, get_payment_method_analysis,
     get_refund_analysis, get_refund_trend, get_order_status_breakdown,
 )
-from pages.ui_utils import (
+from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state,
 )

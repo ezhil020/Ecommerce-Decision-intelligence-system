@@ -10,7 +10,7 @@ from analytics.inventory import (
     get_inventory_risk, get_overstock_products, get_high_demand_low_stock,
     get_inventory_summary,
 )
-from pages.ui_utils import (
+from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state,
 )

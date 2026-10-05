@@ -9,7 +9,7 @@ from analytics.sales import (
     get_sales_trend, get_category_performance, get_brand_performance,
     get_product_performance, get_period_comparison,
 )
-from pages.ui_utils import (
+from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, fmt_pct,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state, alert_banner,
 )

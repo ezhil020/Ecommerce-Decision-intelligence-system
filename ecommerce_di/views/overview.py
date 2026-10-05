@@ -9,7 +9,7 @@ import pandas as pd
 from analytics.sales import get_executive_kpis, get_sales_trend, get_category_performance
 from analytics.inventory import get_inventory_risk
 from analytics.payments import get_order_status_breakdown
-from pages.ui_utils import (
+from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state,
 )

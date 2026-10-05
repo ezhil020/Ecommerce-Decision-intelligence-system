@@ -45,6 +45,11 @@ html, body, [class*="css"] {
     border-right: 1px solid rgba(255,255,255,0.05) !important;
 }
 
+[data-testid="block-container"] {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
 h1, h2, h3, h4 { 
     font-family: 'Inter', sans-serif !important; 
     font-weight: 600 !important;
@@ -280,16 +285,16 @@ elif not db_exists():
 else:
     # Import pages lazily (only when DB exists)
     if page == "🏠 Executive Overview":
-        from pages.overview    import render; render(filters)
+        from views.overview    import render; render(filters)
     elif page == "📈 Sales Intelligence":
-        from pages.sales       import render; render(filters)
+        from views.sales       import render; render(filters)
     elif page == "📦 Products & Inventory":
-        from pages.products    import render; render(filters)
+        from views.products    import render; render(filters)
     elif page == "👥 Customer Intelligence":
-        from pages.customers   import render; render(filters)
+        from views.customers   import render; render(filters)
     elif page == "💳 Payments & Operations":
-        from pages.payments    import render; render(filters)
+        from views.payments    import render; render(filters)
     elif page == "🔬 Advanced Analytics":
-        from pages.analytics   import render; render(filters)
+        from views.analytics   import render; render(filters)
     elif page == "🤖 AI Assistant":
-        from pages.ai_assistant import render; render(filters)
+        from views.ai_assistant import render; render(filters)

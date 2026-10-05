@@ -9,7 +9,7 @@ from analytics.anomalies import get_all_anomalies
 from forecasting.forecasting import forecast_revenue, forecast_orders
 from analytics.sales import get_sales_trend
 from config.settings import FORECAST_PERIODS
-from pages.ui_utils import (
+from views.ui_utils import (
     section_header, fmt_currency, fmt_number,
     chart_layout, COLORS, empty_state, alert_banner,
 )

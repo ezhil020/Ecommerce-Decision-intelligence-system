@@ -4,7 +4,7 @@ Page 7 — AI Business Assistant
 import json
 import streamlit as st
 from config.settings import GEMINI_API_KEY
-from pages.ui_utils import section_header, COLORS, alert_banner
+from views.ui_utils import section_header, COLORS, alert_banner
 
 
 EXAMPLE_QUESTIONS = [
