@@ -36,81 +36,43 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body, [data-testid="stAppViewContainer"] {
+html, body, [class*="css"] {
     font-family: 'Inter', sans-serif !important;
-    background: #080818 !important;
-    color: #e2e8f0 !important;
 }
 
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg,#0f0f2a 0%,#0a0a1e 100%) !important;
-    border-right: 1px solid rgba(99,102,241,0.15) !important;
+    background-color: #0f111a !important;
+    border-right: 1px solid rgba(255,255,255,0.05) !important;
 }
 
-[data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] .stMultiSelect label,
-[data-testid="stSidebar"] .stDateInput label {
-    color: #94a3b8 !important;
-    font-size: 0.78rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.06em !important;
+h1, h2, h3, h4 { 
+    font-family: 'Inter', sans-serif !important; 
+    font-weight: 600 !important;
 }
-
-h1, h2, h3, h4 { color: #f1f5f9 !important; font-family: 'Inter', sans-serif !important; }
 
 .stTabs [data-baseweb="tab-list"] {
-    background: rgba(15,15,40,0.8) !important;
-    border-radius: 10px !important;
-    padding: 4px !important;
-    gap: 4px !important;
+    background: rgba(20,20,30,0.4) !important;
+    border-radius: 8px !important;
+    padding: 2px !important;
 }
 
 .stTabs [data-baseweb="tab"] {
-    color: #94a3b8 !important;
-    border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    padding: 6px 16px !important;
+    border-radius: 6px !important;
+    font-size: 0.9rem !important;
+    padding: 8px 16px !important;
 }
 
-.stTabs [aria-selected="true"] {
-    background: rgba(99,102,241,0.2) !important;
-    color: #a5b4fc !important;
-}
+[data-testid="stMetricValue"] { font-weight: 700 !important; }
+[data-testid="stMetricLabel"] { font-size: 0.85rem !important; opacity: 0.8; }
 
-.stButton > button {
-    border-radius: 8px !important;
-    border: 1px solid rgba(99,102,241,0.3) !important;
-    background: rgba(99,102,241,0.12) !important;
-    color: #a5b4fc !important;
-    font-size: 0.83rem !important;
-    transition: all 0.2s ease !important;
-}
+.stDataFrame { border-radius: 8px !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.1); }
+hr { border-color: rgba(255,255,255,0.1) !important; }
 
-.stButton > button:hover {
-    background: rgba(99,102,241,0.25) !important;
-    border-color: rgba(99,102,241,0.5) !important;
-    color: #c4b5fd !important;
-    transform: translateY(-1px) !important;
-}
-
-.stProgress .st-bo {
-    background-color: #6366f1 !important;
-}
-
-[data-testid="stMetricValue"] { color: #f1f5f9 !important; }
-[data-testid="stMetricLabel"] { color: #94a3b8 !important; font-size: 0.78rem !important; }
-
-.stDataFrame { border-radius: 10px !important; overflow: hidden !important; }
-
-hr { border-color: rgba(99,102,241,0.15) !important; }
-
-.stSpinner { color: #6366f1 !important; }
-
-/* Scrollbar */
+/* Customizing scrollbar for cleaner look */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: rgba(15,15,40,0.5); }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.7); }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.5); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100,100,100,0.8); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -138,50 +100,48 @@ with st.sidebar:
             "🤖 AI Assistant",
             "⚙️ Data Management",
         ],
-        label_visibility="collapsed",
-        key="nav_page",
+        label_visibility="collapsed"
     )
 
     st.markdown("---")
-    st.markdown('<p style="color:#64748b;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em">Global Filters</p>', unsafe_allow_html=True)
-
+    
     # ── Filters ───────────────────────────────────────────────────────────────
     filters = {}
+    with st.expander("🔍 Global Filters", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("From", value=None, format="YYYY-MM-DD")
+        with col2:
+            end_date   = st.date_input("To",   value=None, format="YYYY-MM-DD")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        start_date = st.date_input("From", value=None, format="YYYY-MM-DD", key="f_start")
-    with col2:
-        end_date   = st.date_input("To",   value=None, format="YYYY-MM-DD", key="f_end")
+        if start_date:
+            filters["start_date"] = str(start_date)
+        if end_date:
+            filters["end_date"] = str(end_date)
 
-    if start_date:
-        filters["start_date"] = str(start_date)
-    if end_date:
-        filters["end_date"] = str(end_date)
+        # Dynamic filter options from DB (only if DB exists)
+        if db_exists():
+            from database.connection import query_df
 
-    # Dynamic filter options from DB (only if DB exists)
-    if db_exists():
-        from database.connection import query_df
+            cats = query_df("SELECT DISTINCT category FROM dim_product ORDER BY category")["category"].dropna().tolist()
+            sel_cats = st.multiselect("Category", cats)
+            if sel_cats:
+                filters["category"] = sel_cats
 
-        cats = query_df("SELECT DISTINCT category FROM dim_product ORDER BY category")["category"].dropna().tolist()
-        sel_cats = st.multiselect("Category", cats, key="f_cat")
-        if sel_cats:
-            filters["category"] = sel_cats
+            states = query_df("SELECT DISTINCT state FROM dim_customer WHERE state IS NOT NULL ORDER BY state")["state"].dropna().tolist()
+            sel_states = st.multiselect("State", states)
+            if sel_states:
+                filters["state"] = sel_states
 
-        states = query_df("SELECT DISTINCT state FROM dim_customer WHERE state IS NOT NULL ORDER BY state")["state"].dropna().tolist()
-        sel_states = st.multiselect("State", states, key="f_state")
-        if sel_states:
-            filters["state"] = sel_states
+            memberships = query_df("SELECT DISTINCT membership_label FROM dim_customer WHERE membership_label IS NOT NULL ORDER BY membership_label")["membership_label"].dropna().tolist()
+            sel_mem = st.multiselect("Membership", memberships)
+            if sel_mem:
+                filters["membership"] = sel_mem
 
-        memberships = query_df("SELECT DISTINCT membership_label FROM dim_customer WHERE membership_label IS NOT NULL ORDER BY membership_label")["membership_label"].dropna().tolist()
-        sel_mem = st.multiselect("Membership", memberships, key="f_mem")
-        if sel_mem:
-            filters["membership"] = sel_mem
-
-        pay_modes = query_df("SELECT DISTINCT payment_mode FROM fact_orders ORDER BY payment_mode")["payment_mode"].dropna().tolist()
-        sel_pay = st.multiselect("Payment Mode", pay_modes, key="f_pay")
-        if sel_pay:
-            filters["payment_mode"] = sel_pay
+            pay_modes = query_df("SELECT DISTINCT payment_mode FROM fact_orders ORDER BY payment_mode")["payment_mode"].dropna().tolist()
+            sel_pay = st.multiselect("Payment Mode", pay_modes)
+            if sel_pay:
+                filters["payment_mode"] = sel_pay
 
     st.markdown("---")
     st.markdown(
