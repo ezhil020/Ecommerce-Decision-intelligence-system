@@ -7,7 +7,7 @@ import plotly.express as px
 
 from analytics.sales import (
     get_sales_trend, get_category_performance, get_brand_performance,
-    get_product_performance, get_period_comparison,
+    get_product_performance, get_period_comparison, get_day_of_week_analysis,
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, fmt_pct,
@@ -45,7 +45,7 @@ def render(filters: dict):
     if trend_df.empty:
         empty_state("No sales data for the selected period / filters.")
     else:
-        tab1, tab2, tab3 = st.tabs(["Revenue", "Orders", "Average Order Value"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Revenue & Discounts", "Orders", "Average Order Value", "Weekly Seasonality"])
 
         with tab1:
             fig = go.Figure()
@@ -88,6 +88,27 @@ def render(filters: dict):
             ))
             chart_layout(fig3, height=300)
             st.plotly_chart(fig3, use_container_width=True)
+
+        with tab4:
+            dow_df = get_day_of_week_analysis(filters)
+            if not dow_df.empty:
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    fig_dow1 = go.Figure(go.Bar(
+                        x=dow_df["day_of_week"], y=dow_df["orders"],
+                        marker=dict(color=COLORS["primary"]),
+                        hovertemplate="<b>%{x}</b><br>Orders: %{y}<extra></extra>",
+                    ))
+                    chart_layout(fig_dow1, "Orders by Day of Week", height=280)
+                    st.plotly_chart(fig_dow1, use_container_width=True)
+                with col_d2:
+                    fig_dow2 = go.Figure(go.Bar(
+                        x=dow_df["day_of_week"], y=dow_df["avg_order_value"],
+                        marker=dict(color=COLORS["success"]),
+                        hovertemplate="<b>%{x}</b><br>AOV: ₹%{y:,.0f}<extra></extra>",
+                    ))
+                    chart_layout(fig_dow2, "Average Order Value by Day", height=280)
+                    st.plotly_chart(fig_dow2, use_container_width=True)
 
     st.markdown("---")
 
@@ -168,20 +189,33 @@ def render(filters: dict):
     st.markdown("---")
 
     # ── Period Comparison ──────────────────────────────────────────────────────
-    section_header("Period Comparison", "Compare two time ranges")
-    pc1, pc2, pc3, pc4 = st.columns(4)
-    with pc1:
-        p1s = st.date_input("Period 1 Start", key="p1s",
-                             value=None, format="YYYY-MM-DD")
-    with pc2:
-        p1e = st.date_input("Period 1 End", key="p1e",
-                             value=None, format="YYYY-MM-DD")
-    with pc3:
-        p2s = st.date_input("Period 2 Start", key="p2s",
-                             value=None, format="YYYY-MM-DD")
-    with pc4:
-        p2e = st.date_input("Period 2 End", key="p2e",
-                             value=None, format="YYYY-MM-DD")
+    section_header("Period Comparison", "Compare performance across quarters or custom date ranges")
+
+    preset = st.selectbox(
+        "Comparison Preset",
+        ["Q3 2023 vs Q4 2023", "Q1 2023 vs Q2 2023", "H1 2023 vs H2 2023", "Custom Range"],
+        index=0,
+        key="pc_preset",
+    )
+
+    preset_map = {
+        "Q3 2023 vs Q4 2023": ("2023-07-01", "2023-09-30", "2023-10-01", "2023-12-31"),
+        "Q1 2023 vs Q2 2023": ("2023-01-01", "2023-03-31", "2023-04-01", "2023-06-30"),
+        "H1 2023 vs H2 2023": ("2023-01-01", "2023-06-30", "2023-07-01", "2023-12-31"),
+    }
+
+    if preset in preset_map:
+        p1s, p1e, p2s, p2e = preset_map[preset]
+    else:
+        pc1, pc2, pc3, pc4 = st.columns(4)
+        with pc1:
+            p1s = st.date_input("Period 1 Start", key="p1s", value=None, format="YYYY-MM-DD")
+        with pc2:
+            p1e = st.date_input("Period 1 End", key="p1e", value=None, format="YYYY-MM-DD")
+        with pc3:
+            p2s = st.date_input("Period 2 Start", key="p2s", value=None, format="YYYY-MM-DD")
+        with pc4:
+            p2e = st.date_input("Period 2 End", key="p2e", value=None, format="YYYY-MM-DD")
 
     if all([p1s, p1e, p2s, p2e]):
         comp = get_period_comparison(str(p1s), str(p1e), str(p2s), str(p2e))

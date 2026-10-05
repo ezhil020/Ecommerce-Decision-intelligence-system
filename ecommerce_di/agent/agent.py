@@ -1,12 +1,15 @@
 """
-AI Business Agent using Google Gemini with function calling.
+AI Business Agent using Ollama with function/tool calling.
+Local private LLM execution (default: Qwen2.5:3b).
 Multi-step investigation → evidence-based response.
 """
 import json
 import logging
 from datetime import datetime
-from config.settings import GEMINI_API_KEY, GEMINI_MODEL
-from agent.tools import TOOL_FUNCTIONS, GEMINI_TOOLS
+import requests
+
+from config.settings import OLLAMA_BASE_URL, OLLAMA_MODEL
+from agent.tools import TOOL_FUNCTIONS, OLLAMA_TOOLS
 from database.connection import db_cursor
 
 logger = logging.getLogger(__name__)
@@ -24,42 +27,48 @@ Your role:
 4. Analyse the results
 5. Provide a structured response
 
-Response format for complex questions:
+Response format for business questions:
 **Answer**: Direct answer to the question
 **Evidence**: Key metrics from the data (use actual numbers)
-**Possible Causes**: Factors supported by the analysis
+**Possible Causes / Insights**: Factors supported by the analysis
 **Recommendation**: Specific, actionable business suggestions
 
 Rules:
 - Always distinguish between what the data shows (evidence) vs interpretation (analysis)
 - Recommendations must be grounded in the evidence
-- Clearly label forecasts as estimates
 - If data is insufficient, say so clearly
-- Use Indian number formatting where appropriate (₹, lakhs, crores)
-- Be concise but thorough
+- Format currency in Indian Rupees (₹) where appropriate
+- Be concise, direct, and structured
 """
 
 MAX_TOOL_CALLS = 5  # prevent infinite loops
 
 
 class BusinessAgent:
-    def __init__(self):
-        if not GEMINI_API_KEY:
-            raise ValueError(
-                "GEMINI_API_KEY not set. Please add it to your .env file."
-            )
-        import google.generativeai as genai
-        genai.configure(api_key=GEMINI_API_KEY)
-        self._genai = genai
-        self._model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL,
-            system_instruction=SYSTEM_PROMPT,
-            tools=GEMINI_TOOLS,
-        )
+    def __init__(self, base_url: str | None = None, model: str | None = None):
+        self.base_url = (base_url or OLLAMA_BASE_URL).rstrip("/")
+        self.model = model or OLLAMA_MODEL
+
+    def check_connection(self) -> tuple[bool, str]:
+        """Verify Ollama server is reachable and target model is present."""
+        try:
+            resp = requests.get(f"{self.base_url}/api/tags", timeout=4)
+            if resp.status_code != 200:
+                return False, f"Ollama HTTP error {resp.status_code}"
+            models = [m.get("name", "") for m in resp.json().get("models", [])]
+            # Match model name or model prefix (e.g. qwen2.5:3b)
+            has_model = any(self.model in m or m.startswith(self.model.split(":")[0]) for m in models)
+            if not has_model:
+                return False, f"Model '{self.model}' not found in Ollama. Available: {', '.join(models)}"
+            return True, f"Connected to Ollama ({self.model})"
+        except requests.exceptions.ConnectionError:
+            return False, f"Cannot connect to Ollama at {self.base_url}. Ensure Ollama is running (`ollama serve`)."
+        except Exception as e:
+            return False, f"Ollama connection check failed: {e}"
 
     def investigate(self, user_query: str) -> dict:
         """
-        Run a multi-step investigation and return structured result.
+        Run a multi-step tool-augmented investigation using Ollama /api/chat.
         Returns: {
             "answer": str,
             "tools_used": list,
@@ -68,72 +77,133 @@ class BusinessAgent:
             "error": str | None,
         }
         """
-        tools_used   = []
+        tools_used = []
         tool_results = {}
 
-        chat = self._model.start_chat(enable_automatic_function_calling=False)
+        # Check connectivity
+        is_ok, msg = self.check_connection()
+        if not is_ok:
+            return {
+                "answer": "",
+                "tools_used": [],
+                "tool_results": {},
+                "raw_response": "",
+                "error": msg,
+            }
 
-        # Initial message
-        response = chat.send_message(user_query)
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_query},
+        ]
+
         call_count = 0
+        final_text = ""
 
-        while call_count < MAX_TOOL_CALLS:
-            # Check if model wants to call tools
-            has_tool_call = False
-            tool_responses = []
+        try:
+            while call_count < MAX_TOOL_CALLS:
+                payload = {
+                    "model": self.model,
+                    "messages": messages,
+                    "tools": OLLAMA_TOOLS,
+                    "stream": False,
+                }
 
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, "function_call") and part.function_call.name:
-                    has_tool_call = True
-                    fn_name = part.function_call.name
-                    fn_args = dict(part.function_call.args)
+                resp = requests.post(
+                    f"{self.base_url}/api/chat",
+                    json=payload,
+                    timeout=60,
+                )
+
+                if resp.status_code != 200:
+                    raise RuntimeError(f"Ollama chat error {resp.status_code}: {resp.text}")
+
+                resp_data = resp.json()
+                assistant_msg = resp_data.get("message", {})
+                messages.append(assistant_msg)
+
+                tool_calls = assistant_msg.get("tool_calls", [])
+                if not tool_calls:
+                    # Model provided text answer without further tool calls
+                    final_text = assistant_msg.get("content", "")
+                    break
+
+                # Execute requested tools
+                for tc in tool_calls:
+                    fn_info = tc.get("function", {})
+                    fn_name = fn_info.get("name")
+                    raw_args = fn_info.get("arguments", {})
+
+                    if isinstance(raw_args, str):
+                        try:
+                            fn_args = json.loads(raw_args)
+                        except json.JSONDecodeError:
+                            fn_args = {}
+                    elif isinstance(raw_args, dict):
+                        fn_args = raw_args
+                    else:
+                        fn_args = {}
 
                     tools_used.append(fn_name)
-                    logger.info("AI calling tool: %s(%s)", fn_name, fn_args)
+                    logger.info("Ollama AI calling tool: %s(%s)", fn_name, fn_args)
 
-                    # Execute the tool
                     if fn_name in TOOL_FUNCTIONS:
                         try:
                             result_str = TOOL_FUNCTIONS[fn_name](**fn_args)
                         except TypeError as e:
-                            result_str = json.dumps({"error": f"Bad arguments: {e}"})
+                            # Try calling without unexpected arguments if schema mismatch
+                            try:
+                                result_str = TOOL_FUNCTIONS[fn_name]()
+                            except Exception:
+                                result_str = json.dumps({"error": f"Bad arguments: {e}"})
+                        except Exception as e:
+                            result_str = json.dumps({"error": f"Tool execution failed: {e}"})
                     else:
                         result_str = json.dumps({"error": f"Unknown tool: {fn_name}"})
 
                     tool_results[fn_name] = result_str
 
-                    tool_responses.append(
-                        self._genai.protos.Part(
-                            function_response=self._genai.protos.FunctionResponse(
-                                name=fn_name,
-                                response={"result": result_str},
-                            )
-                        )
-                    )
+                    # Append tool result message for Ollama
+                    messages.append({
+                        "role": "tool",
+                        "content": str(result_str),
+                        "name": fn_name,
+                    })
 
-            if not has_tool_call:
-                break
+                call_count += 1
 
-            # Send tool results back
-            response = chat.send_message(tool_responses)
-            call_count += 1
+            # If loop finished on tool call, request final synthesis if no final text
+            if not final_text and len(messages) > 2:
+                synth_payload = {
+                    "model": self.model,
+                    "messages": messages + [
+                        {"role": "user", "content": "Please synthesize the evidence from the analytical tool results and answer the business question."}
+                    ],
+                    "stream": False,
+                }
+                synth_resp = requests.post(f"{self.base_url}/api/chat", json=synth_payload, timeout=60)
+                if synth_resp.status_code == 200:
+                    final_text = synth_resp.json().get("message", {}).get("content", "")
 
-        # Extract final text response
-        final_text = ""
-        for part in response.candidates[0].content.parts:
-            if hasattr(part, "text") and part.text:
-                final_text += part.text
+            # Log interaction to database
+            self._log_interaction(user_query, tools_used, final_text[:500])
 
-        # Log the interaction
-        self._log_interaction(user_query, tools_used, final_text[:500])
+            return {
+                "answer": final_text.strip(),
+                "tools_used": list(set(tools_used)),
+                "tool_results": tool_results,
+                "raw_response": final_text,
+                "error": None,
+            }
 
-        return {
-            "answer":       final_text,
-            "tools_used":   list(set(tools_used)),
-            "tool_results": tool_results,
-            "raw_response": final_text,
-            "error":        None,
-        }
+        except Exception as exc:
+            logger.error("AI Investigation error: %s", exc)
+            return {
+                "answer": "",
+                "tools_used": list(set(tools_used)),
+                "tool_results": tool_results,
+                "raw_response": "",
+                "error": f"Investigation failed: {exc}",
+            }
 
     def _log_interaction(self, query: str, tools: list, summary: str):
         try:

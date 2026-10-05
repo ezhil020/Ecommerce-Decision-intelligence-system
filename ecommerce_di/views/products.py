@@ -8,7 +8,7 @@ import plotly.express as px
 from analytics.sales import get_product_performance, get_profitability_analysis
 from analytics.inventory import (
     get_inventory_risk, get_overstock_products, get_high_demand_low_stock,
-    get_inventory_summary,
+    get_inventory_summary, get_rating_quality_analysis,
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number,
@@ -159,4 +159,53 @@ def render(filters: dict):
                     "effective_margin":"Margin","total_discount":"Discount",
                 }),
                 use_container_width=True, hide_index=True,
+            )
+
+    st.markdown("---")
+
+    # ── Rating Quality & Return Analysis ───────────────────────────────────────
+    section_header("⭐ Product Rating & Return Rate Correlation",
+                   "Impact of customer ratings on return frequency and profit margins")
+    rate_df = get_rating_quality_analysis()
+
+    if not rate_df.empty:
+        col_r1, col_r2 = st.columns([3, 2])
+        with col_r1:
+            fig_r = go.Figure()
+            fig_r.add_trace(go.Bar(
+                x=rate_df["rating_tier"],
+                y=rate_df["return_rate_pct"],
+                name="Return Rate %",
+                marker_color=COLORS["warning"],
+                hovertemplate="<b>%{x}</b><br>Return Rate: %{y:.2f}%<extra></extra>",
+            ))
+            fig_r.add_trace(go.Scatter(
+                x=rate_df["rating_tier"],
+                y=rate_df["avg_margin_pct"],
+                name="Avg Margin %",
+                mode="lines+markers",
+                marker=dict(size=8, color=COLORS["success"]),
+                line=dict(width=2.5, color=COLORS["success"]),
+                yaxis="y2",
+                hovertemplate="<b>%{x}</b><br>Margin: %{y:.1f}%<extra></extra>",
+            ))
+            fig_r.update_layout(
+                yaxis=dict(title="Return Rate (%)"),
+                yaxis2=dict(title="Avg Margin (%)", overlaying="y", side="right", showgrid=False),
+            )
+            chart_layout(fig_r, "Return Rate & Margin by Rating Tier", height=320)
+            st.plotly_chart(fig_r, use_container_width=True)
+
+        with col_r2:
+            st.dataframe(
+                rate_df.rename(columns={
+                    "rating_tier": "Rating Tier",
+                    "total_orders": "Orders",
+                    "returned_orders": "Returns",
+                    "return_rate_pct": "Return %",
+                    "avg_margin_pct": "Margin %",
+                    "total_revenue": "Revenue (₹)",
+                }).assign(**{"Revenue (₹)": lambda d: d["Revenue (₹)"].apply(lambda v: f"₹{v:,.0f}")}),
+                use_container_width=True,
+                hide_index=True,
             )

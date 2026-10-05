@@ -1,5 +1,5 @@
 """
-AI Business Agent — tool definitions exposed to Gemini function calling.
+AI Business Agent — tool definitions exposed to Ollama / LLM function calling.
 Each tool is a Python function that calls the analytics layer.
 """
 import json
@@ -210,7 +210,7 @@ def tool_compare_periods(period1_start: str, period1_end: str,
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tool registry (for Gemini function calling schema)
+# Tool registry (function calling mapping)
 # ─────────────────────────────────────────────────────────────────────────────
 
 TOOL_FUNCTIONS: dict[str, callable] = {
@@ -374,4 +374,10 @@ GEMINI_TOOLS = [
             },
         ]
     }
+]
+
+# Standard OpenAI/Ollama function tool declarations
+OLLAMA_TOOLS = [
+    {"type": "function", "function": func}
+    for func in GEMINI_TOOLS[0]["function_declarations"]
 ]

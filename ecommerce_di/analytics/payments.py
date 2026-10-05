@@ -97,3 +97,23 @@ def get_order_status_breakdown(filters: dict | None = None) -> pd.DataFrame:
         ORDER BY orders DESC
     """
     return query_df(sql)
+
+
+def get_revenue_leakage_waterfall(filters: dict | None = None) -> dict:
+    """
+    Calculates the financial waterfall from Gross Merchandise Value (GMV)
+    down to Net Realized Revenue.
+    """
+    sql = """
+        SELECT 
+            ROUND(SUM(o.quantity * p.selling_price), 0) AS gross_merchandise_value,
+            ROUND(SUM(o.discount_amount), 0)            AS discounts_given,
+            ROUND(SUM(CASE WHEN o.order_status = 'Cancelled' THEN o.total_amount ELSE 0 END), 0) AS cancelled_revenue,
+            ROUND(SUM(CASE WHEN o.order_status = 'Returned' THEN o.total_amount ELSE 0 END), 0)  AS returned_revenue,
+            ROUND(SUM(fp.transaction_fee), 0)           AS gateway_fees,
+            ROUND(SUM(CASE WHEN o.order_status = 'Delivered' THEN o.total_amount ELSE 0 END) - SUM(fp.transaction_fee), 0) AS net_realized_revenue
+        FROM fact_orders o
+        JOIN dim_product p ON o.product_id = p.product_id
+        JOIN fact_payments fp ON o.order_id = fp.order_id
+    """
+    return query_df(sql).iloc[0].to_dict()

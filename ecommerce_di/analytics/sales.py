@@ -308,3 +308,29 @@ def get_period_comparison(period1_start: str, period1_end: str,
         else:
             result["changes"][key] = None
     return result
+
+
+def get_day_of_week_analysis(filters: dict | None = None) -> pd.DataFrame:
+    """Analyze weekly purchasing rhythm across days of the week."""
+    where, params = _build_where(filters)
+    status_clause = "AND o.order_status NOT IN ('Cancelled','Returned')" if "order_status" not in (filters or {}) else ""
+    sql = f"""
+        SELECT 
+            d.day_of_week,
+            COUNT(o.order_id)             AS orders,
+            ROUND(SUM(o.total_amount), 0) AS revenue,
+            ROUND(AVG(o.total_amount), 0) AS avg_order_value,
+            ROUND(SUM(o.gross_profit), 0) AS gross_profit
+        FROM fact_orders o
+        JOIN dim_date d ON o.order_date_id = d.date_id
+        LEFT JOIN dim_product p ON o.product_id = p.product_id
+        LEFT JOIN dim_customer c ON o.customer_id = c.customer_id
+        {where} {status_clause}
+        GROUP BY d.day_of_week
+    """
+    df = query_df(sql, params)
+    if df.empty:
+        return df
+    day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    df["order_idx"] = df["day_of_week"].map(lambda x: day_order.index(x) if x in day_order else 99)
+    return df.sort_values("order_idx").drop(columns=["order_idx"])

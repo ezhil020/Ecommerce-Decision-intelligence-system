@@ -8,6 +8,7 @@ import plotly.express as px
 from analytics.customers import (
     get_customer_overview, get_customer_revenue, get_customer_segmentation,
     get_geographic_analysis, get_demographic_analysis, get_membership_analysis,
+    get_device_channel_analysis,
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number,
@@ -18,7 +19,7 @@ from views.ui_utils import (
 def render(filters: dict):
     st.markdown("## Customer Intelligence")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Segmentation, demographics, loyalty and geographic analysis</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Behavioral segmentation, channel preference and geographic analysis</p>',
         unsafe_allow_html=True,
     )
 
@@ -38,8 +39,8 @@ def render(filters: dict):
     st.markdown("---")
 
     # ── Segmentation ──────────────────────────────────────────────────────────
-    section_header("Customer Segmentation",
-                   "Based on revenue contribution, order frequency and registration date")
+    section_header("Customer Behavioral Segmentation",
+                   "Dynamic value-loyalty matrix: VIP Champions, High Spenders, Loyal Advocates, and Core Shoppers")
     seg_df = get_customer_segmentation()
 
     if seg_df.empty:
@@ -49,7 +50,8 @@ def render(filters: dict):
             seg_df.groupby("segment")
             .agg(customers=("customer_id","count"),
                  total_revenue=("total_revenue","sum"),
-                 avg_orders=("order_count","mean"))
+                 avg_spend=("total_revenue","mean"),
+                 avg_loyalty=("loyalty_points","mean"))
             .reset_index()
             .sort_values("total_revenue", ascending=False)
         )
@@ -63,7 +65,7 @@ def render(filters: dict):
                 marker=dict(colors=CATEGORY_COLORS),
                 hovertemplate="<b>%{label}</b><br>Customers: %{value}<br>%{percent}<extra></extra>",
             ))
-            chart_layout(fig, "Customers by Segment", height=300)
+            chart_layout(fig, "Customer Share by Segment", height=300)
             st.plotly_chart(fig, use_container_width=True)
 
         with col_b:
@@ -73,43 +75,57 @@ def render(filters: dict):
                 marker=dict(color=CATEGORY_COLORS[:len(seg_summary)]),
                 hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
-            chart_layout(fig2, "Revenue by Segment", height=300)
+            chart_layout(fig2, "Revenue Contribution by Segment", height=300)
             st.plotly_chart(fig2, use_container_width=True)
 
+        display_seg = seg_summary.copy()
+        display_seg["total_revenue"] = display_seg["total_revenue"].apply(lambda v: f"₹{v:,.0f}")
+        display_seg["avg_spend"] = display_seg["avg_spend"].apply(lambda v: f"₹{v:,.0f}")
+        display_seg["avg_loyalty"] = display_seg["avg_loyalty"].round(0).astype(int)
         st.dataframe(
-            seg_summary.round(2).rename(columns={
+            display_seg.rename(columns={
                 "segment":"Segment","customers":"Customers",
-                "total_revenue":"Revenue (₹)","avg_orders":"Avg Orders",
+                "total_revenue":"Total Revenue","avg_spend":"Avg Order Value",
+                "avg_loyalty":"Avg Loyalty Pts",
             }),
             use_container_width=True, hide_index=True,
         )
 
     st.markdown("---")
 
-    # ── Membership ────────────────────────────────────────────────────────────
-    section_header("Membership & Loyalty Analysis")
-    mem_df = get_membership_analysis()
+    # ── Channel & Membership ──────────────────────────────────────────────────
+    section_header("Device Channel & Membership Affinity",
+                   "Shopping platform split (Mobile App vs Desktop) across loyalty tiers")
+    dev_df = get_device_channel_analysis()
 
-    if not mem_df.empty:
+    if not dev_df.empty:
         col_c, col_d = st.columns(2)
         with col_c:
-            fig3 = go.Figure(go.Bar(
-                x=mem_df["membership_label"],
-                y=mem_df["revenue"],
-                marker_color=COLORS["secondary"],
-                hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
+            dev_agg = dev_df.groupby("preferred_device").agg(
+                revenue=("revenue", "sum"),
+                customers=("customers", "sum"),
+            ).reset_index()
+            fig3 = go.Figure(go.Pie(
+                labels=dev_agg["preferred_device"],
+                values=dev_agg["revenue"],
+                hole=0.5,
+                marker=dict(colors=[COLORS["primary"], COLORS["secondary"]]),
+                hovertemplate="<b>%{label}</b><br>Revenue: ₹%{value:,.0f}<br>%{percent}<extra></extra>",
             ))
-            chart_layout(fig3, "Revenue by Membership", height=280)
+            chart_layout(fig3, "Revenue by Platform Channel", height=280)
             st.plotly_chart(fig3, use_container_width=True)
 
         with col_d:
-            fig4 = go.Figure(go.Bar(
+            mem_df = get_membership_analysis()
+            fig4 = go.Figure()
+            fig4.add_trace(go.Bar(
                 x=mem_df["membership_label"],
-                y=mem_df["avg_loyalty_points"],
-                marker_color=COLORS["warning"],
-                hovertemplate="<b>%{x}</b><br>Avg Loyalty: %{y:.0f} pts<extra></extra>",
+                y=mem_df["revenue"],
+                name="Revenue (₹)",
+                marker_color=COLORS["secondary"],
+                hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
-            chart_layout(fig4, "Avg Loyalty Points by Membership", height=280)
+            chart_layout(fig4, "Revenue by Membership Tier", height=280)
             st.plotly_chart(fig4, use_container_width=True)
 
     st.markdown("---")

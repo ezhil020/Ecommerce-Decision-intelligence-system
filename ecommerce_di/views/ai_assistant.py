@@ -1,14 +1,14 @@
 """
-Page 7 — AI Business Assistant
+Page 7 — AI Business Assistant (Powered by Ollama: Qwen2.5:3b)
 """
-import json
 import streamlit as st
-from config.settings import GEMINI_API_KEY
+from config.settings import OLLAMA_BASE_URL, OLLAMA_MODEL
+from agent.agent import get_agent
 from views.ui_utils import section_header, COLORS, alert_banner
 
 
 EXAMPLE_QUESTIONS = [
-    "Why did sales fall this month?",
+    "What was our total revenue and average order value?",
     "Which products need immediate restocking?",
     "Which category generated the highest profit?",
     "Which payment method has the most failures?",
@@ -25,19 +25,44 @@ def render(filters: dict):
     st.markdown("## AI Business Assistant")
     st.markdown(
         '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">'
-        'Ask natural-language questions — the agent retrieves real data and provides evidence-based answers.'
+        'Natural-language business copilot powered locally by <b>Ollama (Qwen2.5:3b)</b>. '
+        'Retrieves real database facts and synthesizes evidence-based answers.'
         '</p>',
         unsafe_allow_html=True,
     )
 
-    if not GEMINI_API_KEY:
+    agent = get_agent()
+    is_connected, status_msg = agent.check_connection()
+
+    if not is_connected:
         st.error(
-            "🔑 **GEMINI_API_KEY not configured.**\n\n"
-            "Please add your Google Gemini API key to the `.env` file:\n\n"
-            "```\nGEMINI_API_KEY=your_key_here\n```\n\n"
-            "Get a free key at [Google AI Studio](https://aistudio.google.com/)."
+            f"⚠️ **Ollama Service Not Reachable**\n\n"
+            f"{status_msg}\n\n"
+            f"**To get started:**\n"
+            f"1. Ensure Ollama is running: `ollama serve`\n"
+            f"2. Ensure the model is downloaded: `ollama pull {OLLAMA_MODEL}`\n"
+            f"3. Configured host: `{OLLAMA_BASE_URL}`"
         )
         return
+
+    # Engine Status Pill
+    st.markdown(f"""
+    <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 20px;
+        padding: 5px 14px;
+        margin-bottom: 16px;
+        font-size: 0.78rem;
+        color: #6ee7b7;
+    ">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span>
+        <b>Engine:</b> Ollama ({OLLAMA_MODEL}) &nbsp;|&nbsp; <b>Host:</b> {OLLAMA_BASE_URL} &nbsp;|&nbsp; <b>Privacy:</b> 100% Offline Local
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Chat history ───────────────────────────────────────────────────────────
     if "chat_history" not in st.session_state:
@@ -55,12 +80,12 @@ def render(filters: dict):
     with st.form("ai_query_form", clear_on_submit=True):
         query = st.text_area(
             "Ask a business question",
-            placeholder="e.g. Why did sales fall this month? Which products need restocking?",
+            placeholder="e.g. Which products need restocking? What is our net revenue and profit margin?",
             height=90,
             key="ai_query_input",
             value=st.session_state.pop("pending_query", ""),
         )
-        submitted = st.form_submit_button("🔍 Investigate", use_container_width=True)
+        submitted = st.form_submit_button("🔍 Investigate with Qwen2.5", use_container_width=True)
 
     if submitted and query.strip():
         _run_investigation(query.strip())
@@ -79,22 +104,19 @@ def _run_investigation(query: str):
     """Run AI investigation and render result."""
     from agent.agent import get_agent
 
-    with st.spinner("🤖 Investigating… querying analytical tools…"):
+    with st.spinner("🤖 Investigating with Qwen2.5:3b… querying analytical database tools…"):
         try:
             agent = get_agent()
             result = agent.investigate(query)
-        except ValueError as e:
-            st.error(str(e))
-            return
         except Exception as e:
             st.error(f"Investigation failed: {e}")
             return
 
     entry = {
-        "query":       query,
-        "answer":      result["answer"],
-        "tools_used":  result["tools_used"],
-        "error":       result.get("error"),
+        "query": query,
+        "answer": result["answer"],
+        "tools_used": result["tools_used"],
+        "error": result.get("error"),
     }
     st.session_state.chat_history.append(entry)
     st.rerun()
@@ -122,12 +144,12 @@ def _render_entry(entry: dict):
         tool_badges = " ".join(
             f'<span style="background:rgba(139,92,246,0.2);color:#c4b5fd;'
             f'border:1px solid rgba(139,92,246,0.3);border-radius:20px;'
-            f'padding:2px 10px;font-size:0.72rem;margin-right:4px">{t}</span>'
+            f'padding:2px 10px;font-size:0.72rem;margin-right:4px">🔧 {t}</span>'
             for t in entry["tools_used"]
         )
         st.markdown(
             f'<div style="margin-bottom:8px;padding-left:4px">'
-            f'<span style="color:#64748b;font-size:0.72rem">Tools used: </span>'
+            f'<span style="color:#64748b;font-size:0.72rem">Database Tools Executed: </span>'
             f'{tool_badges}</div>',
             unsafe_allow_html=True,
         )
@@ -136,17 +158,17 @@ def _render_entry(entry: dict):
     if entry.get("error"):
         st.error(entry["error"])
     else:
-        st.markdown(f"""
+        st.markdown("""
         <div style="
-            background: rgba(15,15,35,0.8);
-            border: 1px solid rgba(99,102,241,0.2);
+            background: rgba(15,23,42,0.85);
+            border: 1px solid rgba(99,102,241,0.25);
             border-radius: 10px;
-            padding: 16px 20px;
-            margin-bottom: 8px;
-            color: #e2e8f0;
-            font-size: 0.88rem;
-            line-height: 1.7;
+            padding: 18px 22px;
+            margin-bottom: 12px;
+            color: #f1f5f9;
         ">
-            {entry['answer'].replace(chr(10), '<br>')}
-        </div>
         """, unsafe_allow_html=True)
+
+        st.markdown(entry["answer"])
+
+        st.markdown("</div>", unsafe_allow_html=True)

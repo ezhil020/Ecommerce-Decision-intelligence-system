@@ -19,9 +19,9 @@ PAYMENTS_CSV   = DATA_DIR / "Payments.csv"
 
 DATABASE_PATH  = Path(os.getenv("DATABASE_PATH", BASE_DIR / "ecommerce_di.db"))
 
-# ── AI ─────────────────────────────────────────────────────────────────────
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL   = "gemini-2.0-flash"
+# ── AI / LLM (Ollama) ──────────────────────────────────────────────────────
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 
 # ── Business thresholds ────────────────────────────────────────────────────
 # Customer segmentation (percentile-based; overridable via UI)

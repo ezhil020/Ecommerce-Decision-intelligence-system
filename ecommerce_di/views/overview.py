@@ -26,12 +26,18 @@ def render(filters: dict):
     with st.spinner("Loading KPIs…"):
         kpis = get_executive_kpis(filters)
 
+    rev = kpis.get("total_revenue", 0)
+    gp = kpis.get("total_gross_profit", 0)
+    margin_pct = (gp / rev * 100) if rev > 0 else 0
+    disc = kpis.get("total_discount", 0)
+    disc_pct = (disc / (rev + disc) * 100) if (rev + disc) > 0 else 0
+
     cols = st.columns(4)
     kpi_defs = [
-        ("Total Revenue",     fmt_currency(kpis["total_revenue"]),   "💰", COLORS["primary"],   "Net revenue from all orders"),
-        ("Total Orders",      fmt_number(kpis["total_orders"]),       "📦", COLORS["info"],      f"AOV: {fmt_currency(kpis['avg_order_value'])}"),
-        ("Total Customers",   fmt_number(kpis["total_customers"]),    "👥", COLORS["success"],   "Unique buyers"),
-        ("Gross Profit",      fmt_currency(kpis["total_gross_profit"]),"📈", COLORS["secondary"], "Selling price – cost × qty"),
+        ("Total Net Revenue", fmt_currency(rev), "💰", COLORS["primary"], "Realized net order value"),
+        ("Gross Profit",      fmt_currency(gp),  "📈", COLORS["success"], f"Overall margin: {margin_pct:.1f}%"),
+        ("Total Orders",      fmt_number(kpis["total_orders"]), "📦", COLORS["info"], f"AOV: {fmt_currency(kpis['avg_order_value'])}"),
+        ("Active Customers",  fmt_number(kpis["total_customers"]), "👥", COLORS["secondary"], "Distinct buyers across period"),
     ]
     for col, (title, val, icon, accent, sub) in zip(cols, kpi_defs):
         with col:
@@ -39,24 +45,12 @@ def render(filters: dict):
 
     cols2 = st.columns(4)
     kpi_defs2 = [
-        ("Units Sold",         fmt_number(kpis["total_units_sold"]),    "📊", COLORS["info"],    ""),
-        ("Total Discount",     fmt_currency(kpis["total_discount"]),    "🏷️", COLORS["warning"], ""),
-        ("Total Refunds",      fmt_currency(kpis["total_refund"]),      "↩️", COLORS["danger"],  ""),
-        ("Return/Cancel Rate", fmt_pct(kpis["return_cancel_rate"]),     "⚠️", COLORS["warning"],
-         f"{int(kpis['returned_cancelled_orders'])} orders"),
+        ("Gross Margin",       f"{margin_pct:.1f}%", "🎯", COLORS["success"] if margin_pct > 25 else COLORS["warning"], "Profitability index"),
+        ("Discount Erosion",   fmt_currency(disc),   "🏷️", COLORS["warning"], f"{disc_pct:.1f}% of gross GMV"),
+        ("Return/Cancel Rate", fmt_pct(kpis["return_cancel_rate"]), "⚠️", COLORS["danger"], f"{int(kpis['returned_cancelled_orders'])} orders lost"),
+        ("Stockout Risk",      f"{int(kpis['products_below_reorder'])} SKUs", "🔴", COLORS["danger"] if kpis['products_below_reorder'] > 0 else COLORS["success"], "Products below reorder level"),
     ]
     for col, (title, val, icon, accent, sub) in zip(cols2, kpi_defs2):
-        with col:
-            kpi_card(title, val, subtitle=sub, icon=icon, accent=accent)
-
-    cols3 = st.columns(4)
-    kpi_defs3 = [
-        ("Total Products",     fmt_number(kpis["total_products"]),                         "🏪", COLORS["muted"],   "In database"),
-        ("Below Reorder",      str(int(kpis["products_below_reorder"])),                    "🔴", COLORS["danger"],  "Need restocking"),
-        ("Total Tax",          fmt_currency(kpis["total_tax"]),                             "📋", COLORS["muted"],   ""),
-        ("Shipping Revenue",   fmt_currency(kpis["total_shipping"]),                        "🚚", COLORS["muted"],   ""),
-    ]
-    for col, (title, val, icon, accent, sub) in zip(cols3, kpi_defs3):
         with col:
             kpi_card(title, val, subtitle=sub, icon=icon, accent=accent)
 

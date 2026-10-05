@@ -52,44 +52,73 @@ def get_customer_revenue(top_n: int = 50, filters: dict | None = None) -> pd.Dat
 
 def get_customer_segmentation() -> pd.DataFrame:
     """
-    Segment customers into: High Value, Frequent, New, Returning, Low Engagement.
-    Uses percentile thresholds from config.
+    Segment customers into meaningful behavioral cohorts based on spend level
+    and loyalty engagement:
+      - VIP Champions: Top-tier revenue & High loyalty points
+      - High Spenders: Top-tier revenue, lower loyalty (upsell to loyalty)
+      - Loyal Advocates: High loyalty points, moderate spend
+      - Core Customers: Steady spenders above median
+      - Budget / Casual Shoppers: Entry-level spenders
     """
     sql = """
         SELECT
             c.customer_id,
             c.name,
             c.membership_label,
+            c.loyalty_points,
+            c.preferred_device,
             c.registration_date,
             COUNT(o.order_id)   AS order_count,
-            SUM(o.total_amount) AS total_revenue,
-            MAX(o.order_date)   AS last_order_date,
-            JULIANDAY('now') - JULIANDAY(c.registration_date) AS days_since_registration
+            COALESCE(SUM(o.total_amount), 0) AS total_revenue,
+            MAX(o.order_date)   AS last_order_date
         FROM dim_customer c
         LEFT JOIN fact_orders o ON c.customer_id = o.customer_id
         GROUP BY c.customer_id, c.name, c.membership_label,
-                 c.registration_date
+                 c.loyalty_points, c.preferred_device, c.registration_date
     """
     df = query_df(sql)
     if df.empty:
         return df
 
-    rev_p  = df["total_revenue"].quantile(HIGH_VALUE_REVENUE_PERCENTILE / 100)
-    ord_p  = df["order_count"].quantile(FREQUENT_ORDER_PERCENTILE / 100)
+    rev_top = df["total_revenue"].quantile(0.80)
+    rev_mid = df["total_revenue"].quantile(0.50)
+    loyalty_high = df["loyalty_points"].quantile(0.65)
 
     def segment(row):
-        if row["days_since_registration"] is not None and row["days_since_registration"] <= NEW_CUSTOMER_DAYS:
-            return "New"
-        if row["total_revenue"] >= rev_p:
-            return "High Value"
-        if row["order_count"] >= ord_p and row["order_count"] > 1:
-            return "Frequent"
-        if row["order_count"] > 1:
-            return "Returning"
-        return "Low Engagement"
+        rev = row["total_revenue"]
+        loy = row["loyalty_points"]
+        if rev >= rev_top and loy >= loyalty_high:
+            return "VIP Champions"
+        elif rev >= rev_top:
+            return "High Spenders"
+        elif loy >= loyalty_high:
+            return "Loyal Advocates"
+        elif rev >= rev_mid:
+            return "Core Customers"
+        else:
+            return "Budget / Casual"
 
     df["segment"] = df.apply(segment, axis=1)
     return df
+
+
+def get_device_channel_analysis() -> pd.DataFrame:
+    """Breakdown of customer orders, revenue and average spend by device and membership."""
+    sql = """
+        SELECT
+            c.preferred_device,
+            c.membership_label,
+            COUNT(DISTINCT c.customer_id) AS customers,
+            COUNT(o.order_id)             AS orders,
+            ROUND(SUM(o.total_amount), 0) AS revenue,
+            ROUND(AVG(o.total_amount), 0) AS avg_spend,
+            ROUND(AVG(c.loyalty_points), 0) AS avg_loyalty
+        FROM dim_customer c
+        LEFT JOIN fact_orders o ON c.customer_id = o.customer_id
+        GROUP BY c.preferred_device, c.membership_label
+        ORDER BY c.preferred_device, revenue DESC
+    """
+    return query_df(sql)
 
 
 def get_geographic_analysis() -> pd.DataFrame:

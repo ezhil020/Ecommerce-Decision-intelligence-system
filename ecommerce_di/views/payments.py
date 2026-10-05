@@ -7,7 +7,7 @@ import plotly.express as px
 
 from analytics.payments import (
     get_payment_overview, get_payment_method_analysis,
-    get_refund_analysis, get_refund_trend, get_order_status_breakdown,
+    get_refund_analysis, get_refund_trend, get_revenue_leakage_waterfall,
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
@@ -149,28 +149,57 @@ def render(filters: dict):
 
     st.markdown("---")
 
-    # ── Order Status ───────────────────────────────────────────────────────────
-    section_header("Order Status Breakdown", "Operational view of all orders")
-    status_df = get_order_status_breakdown()
+    # ── Revenue Leakage & Cash Flow Waterfall ───────────────────────────────────
+    section_header("Revenue Leakage & Cash Flow Waterfall",
+                   "From Gross Merchandise Value (GMV) to Net Realized Settlement")
+    wf_data = get_revenue_leakage_waterfall()
 
-    if not status_df.empty:
-        col_e, col_f = st.columns([1, 2])
-        with col_e:
-            fig5 = go.Figure(go.Pie(
-                labels=status_df["order_status"],
-                values=status_df["orders"],
-                hole=0.5,
-                marker=dict(colors=CATEGORY_COLORS),
-                hovertemplate="<b>%{label}</b><br>%{value} orders (%{percent})<extra></extra>",
+    if wf_data:
+        gmv = wf_data.get("gross_merchandise_value", 0)
+        disc = wf_data.get("discounts_given", 0)
+        canc = wf_data.get("cancelled_revenue", 0)
+        ret = wf_data.get("returned_revenue", 0)
+        fee = wf_data.get("gateway_fees", 0)
+        net_cash = wf_data.get("net_realized_revenue", 0)
+
+        col_w1, col_w2 = st.columns([2, 1])
+
+        with col_w1:
+            fig_wf = go.Figure(go.Waterfall(
+                name="Cash Flow",
+                orientation="v",
+                measure=["relative", "relative", "relative", "relative", "relative", "total"],
+                x=["Gross GMV", "Discounts", "Cancellations", "Returns", "Gateway Fees", "Net Realized"],
+                textposition="outside",
+                text=[f"₹{gmv/1e7:.2f}Cr", f"-₹{disc/1e5:.1f}L", f"-₹{canc/1e7:.2f}Cr",
+                      f"-₹{ret/1e7:.2f}Cr", f"-₹{fee/1e5:.1f}L", f"₹{net_cash/1e7:.2f}Cr"],
+                y=[gmv, -disc, -canc, -ret, -fee, net_cash],
+                connector={"line": {"color": "rgba(255,255,255,0.2)"}},
+                decreasing={"marker": {"color": COLORS["danger"]}},
+                increasing={"marker": {"color": COLORS["primary"]}},
+                totals={"marker": {"color": COLORS["success"]}},
+                hovertemplate="<b>%{x}</b><br>Amount: ₹%{y:,.0f}<extra></extra>",
             ))
-            chart_layout(fig5, height=280)
-            st.plotly_chart(fig5, use_container_width=True)
+            chart_layout(fig_wf, "Revenue Realization Bridge", height=320)
+            st.plotly_chart(fig_wf, use_container_width=True)
 
-        with col_f:
-            st.dataframe(
-                status_df.rename(columns={
-                    "order_status":"Status","orders":"Orders",
-                    "revenue":"Revenue (₹)","units":"Units",
-                }).assign(**{"Revenue (₹)": lambda d: d["Revenue (₹)"].round(0).astype(int)}),
-                use_container_width=True, hide_index=True, height=280,
+        with col_w2:
+            st.markdown("#### Realization Efficiency")
+            realization_pct = (net_cash / gmv * 100) if gmv > 0 else 0
+            leakage_pct = 100 - realization_pct
+
+            kpi_card(
+                "Net Realization Rate",
+                f"{realization_pct:.1f}%",
+                subtitle=f"Lost to leakage: {leakage_pct:.1f}%",
+                icon="🏦",
+                accent=COLORS["success"] if realization_pct > 65 else COLORS["warning"],
             )
+            st.markdown(f"""
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;margin-top:10px;font-size:0.83rem;color:#cbd5e1;line-height:1.6">
+                <div>🏷️ <b>Discount Erosion:</b> {fmt_currency(disc)} ({(disc/gmv*100):.1f}%)</div>
+                <div>❌ <b>Cancellation Loss:</b> {fmt_currency(canc)} ({(canc/gmv*100):.1f}%)</div>
+                <div>↩️ <b>Return Loss:</b> {fmt_currency(ret)} ({(ret/gmv*100):.1f}%)</div>
+                <div>💳 <b>Gateway Fees:</b> {fmt_currency(fee)} ({(fee/gmv*100):.2f}%)</div>
+            </div>
+            """, unsafe_allow_html=True)
