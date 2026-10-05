@@ -1,0 +1,2278 @@
+# SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+
+## E-Commerce Decision Intelligence System
+
+**Project Type:** Business Intelligence + Data Analytics + AI-Powered Decision Support  
+**Primary Focus:** Business Intelligence  
+**Supporting Components:** Predictive Analytics, Machine Learning, Anomaly Detection, AI Agent  
+**Application Type:** Unified Web-Based Decision Intelligence Platform  
+**Version:** 1.0
+
+---
+
+# 1. Introduction
+
+## 1.1 Purpose
+
+The **E-Commerce Decision Intelligence System** is a unified web-based platform designed to help e-commerce businesses analyze their operational and business data, understand performance, identify problems, investigate their causes, and obtain evidence-based recommendations.
+
+The system will integrate data from four major business areas:
+
+- Customers
+- Orders
+- Products
+- Payments
+
+Instead of providing only static reports, the system will combine:
+
+1. **Business Intelligence dashboards**
+2. **Interactive analytical capabilities**
+3. **Product and inventory intelligence**
+4. **Customer intelligence**
+5. **Payment and refund analysis**
+6. **Trend and anomaly analysis**
+7. **Supporting predictive analytics**
+8. **An AI-powered business assistant**
+9. **Root-cause investigation**
+10. **Evidence-based recommendations**
+
+The primary purpose is therefore **decision support**, not merely prediction.
+
+The system should answer three progressively deeper questions:
+
+> **What is happening?** → Business Intelligence
+
+> **Why is it happening?** → Analytics and AI-assisted investigation
+
+> **What could be done about it?** → Decision support and recommendations
+
+---
+
+# 2. Project Scope
+
+## 2.1 In-Scope
+
+The system shall cover the following major areas:
+
+### A. Data Management
+- Import customer data
+- Import order data
+- Import product data
+- Import payment data
+- Clean and standardize data
+- Handle missing values
+- Remove unnecessary columns
+- Standardize dates and monetary values
+- Validate relationships between tables
+- Store processed data in a structured database
+
+### B. Business Intelligence
+
+The core of the project will provide:
+
+- Executive KPIs
+- Sales analysis
+- Revenue analysis
+- Order analysis
+- Product analysis
+- Category analysis
+- Brand analysis
+- Customer analysis
+- Geographic analysis
+- Inventory analysis
+- Payment analysis
+- Refund analysis
+- Operational analysis
+- Time-based analysis
+- Comparative analysis
+- Drill-down analysis
+- Interactive filtering
+
+### C. Advanced Analytics
+
+Supporting analytical capabilities will include:
+
+- Sales trend analysis
+- Demand analysis
+- Forecasting
+- Customer segmentation
+- Profitability analysis
+- Anomaly detection
+- Inventory risk detection
+
+These features support the BI system and are **not the primary project category**.
+
+### D. AI Business Agent
+
+The system shall provide a natural-language AI assistant capable of:
+
+- Understanding business questions
+- Selecting appropriate analytical tools
+- Retrieving analytical results
+- Performing multi-step investigations
+- Identifying possible causes
+- Explaining evidence
+- Generating recommendations
+
+### E. Decision Support
+
+The system shall convert analytical findings into actionable suggestions such as:
+
+- Inventory replenishment suggestions
+- Product performance actions
+- Discount-related suggestions
+- Customer retention opportunities
+- Payment issue investigation
+- Refund investigation
+- Product/category attention areas
+
+---
+
+# 3. Out of Scope
+
+To maintain a realistic and durable project scope, the following are **not required** in the first version.
+
+### 3.1 Real-time e-commerce transaction processing
+
+The system is an analytics and decision-support platform.
+
+It is **not** required to:
+
+- Process customer purchases
+- Process actual payments
+- Manage shopping carts
+- Manage checkout
+- Replace an e-commerce website
+
+---
+
+### 3.2 Direct inventory transaction management
+
+The system can identify:
+
+> "Product X is below reorder level."
+
+But it does not need to automatically create a purchase order.
+
+Actual stock modification is outside the initial scope.
+
+---
+
+### 3.3 Detailed return-reason analysis
+
+The current dataset contains:
+
+- Returned order status
+- Refund amount
+- Refund date
+
+But it does **not** contain detailed return reasons.
+
+Therefore, the system must **not claim** to analyze things such as:
+
+> "Customers return products because of damaged packaging."
+
+unless such data is added later.
+
+---
+
+### 3.4 Supplier/vendor management
+
+The current dataset does not contain a supplier table.
+
+Therefore:
+
+- Supplier performance
+- Supplier lead time
+- Supplier reliability
+
+are outside the current scope.
+
+---
+
+### 3.5 Automated business execution
+
+The AI agent will recommend actions.
+
+It will not automatically:
+
+- Change product prices
+- Place purchase orders
+- Cancel orders
+- Issue refunds
+- Contact customers
+- Change inventory quantities
+
+without an explicitly designed external integration and authorization layer.
+
+---
+
+# 4. Existing Dataset
+
+The project will use the provided e-commerce dataset consisting of four related CSV files.
+
+## 4.1 Customers
+
+**File:** `Customers.csv`
+
+Contains approximately **5,000 customer records**.
+
+Main fields:
+
+| Field | Purpose |
+|---|---|
+| Customer_ID | Unique customer identifier |
+| Name | Customer name |
+| Gender | Customer demographic |
+| Age | Customer age |
+| Date_of_Birth | Date of birth |
+| Email | Customer contact identifier |
+| Phone | Customer contact identifier |
+| City | Customer location |
+| State | Customer location |
+| Country | Customer location |
+| Pincode | Geographic information |
+| Registration_Date | Customer registration |
+| Membership_label | Membership classification |
+| Loyalty_Points | Loyalty information |
+| Preferred_Device | Customer device preference |
+
+---
+
+# 5. Orders Dataset
+
+**File:** `Orders.csv`
+
+Contains approximately **5,500 order records**.
+
+Main fields:
+
+| Field | Purpose |
+|---|---|
+| Order_ID | Unique order identifier |
+| Order_Date | Date of order |
+| Customer_ID | Customer relationship |
+| Product_ID | Product relationship |
+| Product_Name | Product name |
+| Quantity (nos.) | Units purchased |
+| Unit_Price | Transaction price |
+| Discount_Amount | Discount |
+| Tax_Amount | Tax |
+| Shipping_Charge | Shipping cost |
+| Payment_Mode | Payment method |
+| Order_Status | Order state |
+| Total_Amount | Order value |
+
+---
+
+# 6. Products Dataset
+
+**File:** `Products.csv`
+
+Contains approximately **500 products**.
+
+Main fields:
+
+| Field | Purpose |
+|---|---|
+| Product_ID | Unique product identifier |
+| Product_Name | Product name |
+| Category | Main category |
+| Sub_Category | Subcategory |
+| Brand | Brand |
+| SKU | Stock keeping unit |
+| Cost_Price | Product cost |
+| Selling_Price | Selling price |
+| Profit Margin | Product margin |
+| Discount_% | Product discount |
+| Stock_Quantity (nos.) | Current stock |
+| Reorder_Level | Reorder threshold |
+| Product_Rating | Product rating |
+| Launch_Date | Product launch |
+| Product_Status | Active/inactive status |
+
+---
+
+# 7. Payments Dataset
+
+**File:** `Payments.csv`
+
+Contains approximately **5,500 payment records**.
+
+Main fields:
+
+| Field | Purpose |
+|---|---|
+| Payment_ID | Unique payment identifier |
+| Order_ID | Order relationship |
+| Payment_Date | Payment date |
+| Payment_Mode | Payment method |
+| Payment_Status | Payment result |
+| Transaction_Fee | Payment processing fee |
+| Refund_Amount | Refund value |
+| Refund_Date | Refund date |
+
+The file also contains unnecessary `Unnamed` columns, which should be removed during preprocessing.
+
+---
+
+# 8. Data Relationships
+
+The database shall maintain the following relationships:
+
+```text
+Customers
+    │
+    │ Customer_ID
+    ▼
+Orders
+    │
+    ├──────── Product_ID ────────► Products
+    │
+    └──────── Order_ID ──────────► Payments
+```
+
+## 8.1 Customer → Orders
+
+One customer may have multiple orders.
+
+```text
+Customers.Customer_ID
+        ↓
+Orders.Customer_ID
+```
+
+Relationship:
+
+**1 : Many**
+
+---
+
+## 8.2 Products → Orders
+
+One product may occur in multiple orders.
+
+```text
+Products.Product_ID
+        ↓
+Orders.Product_ID
+```
+
+Relationship:
+
+**1 : Many**
+
+---
+
+## 8.3 Orders → Payments
+
+An order is associated with payment information.
+
+```text
+Orders.Order_ID
+        ↓
+Payments.Order_ID
+```
+
+Relationship:
+
+**1 : 1 / 1 : Many depending on future payment extensions**
+
+The implementation should not assume that only one payment record can ever exist if the system is later extended to support retries or multiple payment attempts.
+
+---
+
+# 9. Data Preparation Requirements
+
+Before analytics, the system shall execute a data preparation pipeline.
+
+## 9.1 Data Cleaning
+
+The system shall:
+
+- Remove unnecessary columns
+- Remove completely empty columns
+- Remove leading/trailing spaces
+- Standardize column names
+- Detect duplicate records
+- Detect invalid identifiers
+- Handle missing values
+- Validate foreign keys
+- Standardize data types
+
+---
+
+## 9.2 Date Standardization
+
+The dataset contains different date representations.
+
+For example:
+
+- Excel serial dates
+- `DD-MM-YYYY` formatted strings
+
+All dates shall be converted to a standard database date format.
+
+The system shall derive:
+
+- Year
+- Quarter
+- Month
+- Month name
+- Week
+- Day
+- Day of week
+
+This enables time-based BI.
+
+---
+
+# 10. Currency Cleaning
+
+Payment fields such as:
+
+```text
+₹ 216.07
+₹ 6,488.00
+```
+
+must be converted into numeric values.
+
+For example:
+
+```text
+₹ 6,488.00
+        ↓
+6488.00
+```
+
+The database should store monetary values as numeric/decimal values rather than formatted strings.
+
+---
+
+# 11. Data Quality Validation
+
+The system shall perform validation checks such as:
+
+### Customer validation
+- Unique Customer_ID
+- Valid registration dates
+- Valid membership values
+
+### Order validation
+- Unique Order_ID
+- Valid Customer_ID
+- Valid Product_ID
+- Quantity > 0
+- Monetary values valid
+
+### Product validation
+- Unique Product_ID
+- Selling price valid
+- Cost price valid
+- Stock quantity ≥ 0
+- Reorder level ≥ 0
+
+### Payment validation
+- Valid Order_ID
+- Valid payment status
+- Valid refund amount
+- Valid transaction fee
+
+The system should produce a data-quality report.
+
+---
+
+# 12. Business Intelligence Requirements
+
+## 12.1 Executive Dashboard
+
+The first screen shall provide a high-level business overview.
+
+### Required KPIs
+
+At minimum:
+
+- Total Revenue
+- Total Orders
+- Total Customers
+- Total Products
+- Total Units Sold
+- Average Order Value
+- Total Discount
+- Total Refund Amount
+- Profit / Estimated Gross Profit
+- Return/Cancelled Order Rate
+- Products Below Reorder Level
+
+---
+
+## 12.2 KPI Comparison
+
+KPIs should optionally show comparisons against:
+
+- Previous month
+- Previous period
+- Previous year, where sufficient data exists
+
+Example:
+
+```text
+Revenue
+₹25.4 L
+↑ 8.4%
+vs previous period
+```
+
+---
+
+# 13. Sales Intelligence
+
+The system shall provide:
+
+### Sales metrics
+
+- Revenue
+- Orders
+- Quantity sold
+- Average order value
+- Average selling price
+- Discount
+- Tax
+- Shipping charges
+
+### Sales dimensions
+
+Analysis shall be possible by:
+
+- Date
+- Month
+- Category
+- Subcategory
+- Brand
+- Product
+- Customer
+- Membership
+- Location
+- Payment method
+
+---
+
+# 14. Time-Based Analysis
+
+The system shall provide:
+
+- Daily sales
+- Weekly sales
+- Monthly sales
+- Quarterly sales
+- Yearly sales where applicable
+
+Charts should allow the user to identify:
+
+- Growth
+- Decline
+- Peaks
+- Seasonal patterns
+- Sudden changes
+
+---
+
+# 15. Comparative Analysis
+
+The system shall support comparisons such as:
+
+```text
+Current Month
+       vs
+Previous Month
+```
+
+and:
+
+```text
+Category A
+       vs
+Category B
+```
+
+Examples:
+
+- Revenue growth
+- Order growth
+- Profit growth
+- Product sales
+- Refund rates
+- Payment failure rates
+
+---
+
+# 16. Product Intelligence
+
+The system shall analyze:
+
+- Product revenue
+- Units sold
+- Profit
+- Profit margin
+- Discount
+- Rating
+- Stock quantity
+- Reorder level
+- Product status
+
+### Required views
+
+**Top-performing products**
+
+**Low-performing products**
+
+**High-revenue / low-margin products**
+
+**High-demand / low-stock products**
+
+**Low-sales / high-stock products**
+
+---
+
+# 17. Category and Brand Intelligence
+
+The system shall provide:
+
+```text
+Category
+   ↓
+Subcategory
+   ↓
+Brand
+   ↓
+Product
+```
+
+Analysis should include:
+
+- Revenue
+- Units sold
+- Profit
+- Margin
+- Discount
+- Product count
+
+This hierarchy shall also support drill-down.
+
+---
+
+# 18. Inventory Intelligence
+
+This is one of the major decision-support modules.
+
+## 18.1 Stock Risk
+
+The system shall identify products where:
+
+```text
+Stock Quantity < Reorder Level
+```
+
+These products should be marked as requiring attention.
+
+---
+
+## 18.2 Overstock Detection
+
+The system should identify products having:
+
+- High stock
+- Low sales
+
+This can indicate potential overstock.
+
+---
+
+## 18.3 High-Demand / Low-Stock Detection
+
+The system shall identify products where:
+
+```text
+High sales
++
+Low available stock
+```
+
+These products should receive high inventory attention.
+
+---
+
+# 19. Customer Intelligence
+
+The system shall analyze customers using:
+
+- Customer location
+- Gender
+- Age
+- Membership
+- Loyalty points
+- Preferred device
+- Order frequency
+- Revenue contribution
+- Average order value
+
+---
+
+# 20. Customer Segmentation
+
+The system may classify customers into analytical groups such as:
+
+### High-value customers
+
+Customers contributing significant revenue.
+
+### Frequent customers
+
+Customers placing many orders.
+
+### New customers
+
+Recently registered or recently acquired customers.
+
+### Returning customers
+
+Customers with multiple purchases.
+
+### Low-engagement customers
+
+Customers with relatively low purchasing activity.
+
+The exact thresholds should be configurable rather than permanently hard-coded.
+
+---
+
+# 21. Geographic Intelligence
+
+Because customer data contains:
+
+- City
+- State
+- Country
+- Pincode
+
+the system shall support:
+
+- Revenue by state
+- Orders by state
+- Customers by state
+- Revenue by city
+- Orders by city
+- Customer distribution
+
+A map visualization can be added if the selected visualization technology supports it reliably.
+
+---
+
+# 22. Payment Intelligence
+
+The system shall analyze:
+
+- Payment methods
+- Successful payments
+- Failed payments
+- Payment failure rate
+- Transaction fees
+- Payment volume
+
+Example:
+
+> Which payment method has the highest failure rate?
+
+The system should calculate this from the payment data rather than allowing the AI model to estimate it.
+
+---
+
+# 23. Refund Intelligence
+
+The system shall analyze:
+
+- Total refund amount
+- Number of refunded orders
+- Refund rate
+- Refund amount by product
+- Refund amount by category
+- Refund amount by payment method
+- Refund trend
+
+The system must distinguish between:
+
+**Order Status = Returned**
+
+and
+
+**Payment Refund Amount**
+
+because they represent different business concepts.
+
+---
+
+# 24. Operational Intelligence
+
+The system shall analyze:
+
+- Order status
+- Payment status
+- Shipping charges
+- Refunds
+- Cancellations
+- Returned orders
+- Failed payments
+
+This provides an operational view beyond sales alone.
+
+---
+
+# 25. Profitability Analysis
+
+The system shall provide:
+
+- Revenue
+- Cost
+- Gross profit
+- Profit margin
+- Profit by product
+- Profit by category
+- Profit by brand
+- Profit vs discount
+
+### Important implementation requirement
+
+The project team must first establish the exact business meaning of:
+
+- `Unit_Price`
+- `Selling_Price`
+- `Cost_Price`
+- `Discount_Amount`
+- `Total_Amount`
+
+before implementing profit calculations.
+
+The formula must be documented in the system's data dictionary.
+
+The system must **not double-count discounts, taxes, or shipping charges**.
+
+---
+
+# 26. Advanced Analytics
+
+Advanced analytics are supporting capabilities.
+
+They should enhance the BI system rather than replace it.
+
+---
+
+## 26.1 Forecasting
+
+The system may forecast:
+
+- Future sales
+- Future order volume
+- Product demand
+
+Potential methods:
+
+- Moving average
+- Exponential smoothing
+- ARIMA
+- Other appropriate time-series methods
+
+The system shall display:
+
+```text
+Historical data
+       +
+Forecast
+       +
+Confidence/uncertainty information where supported
+```
+
+Forecasts must clearly be labeled as estimates.
+
+---
+
+# 27. Anomaly Detection
+
+The system shall identify unusual business behavior.
+
+Possible anomalies:
+
+- Sudden revenue decrease
+- Sudden revenue increase
+- Unusual refund spike
+- Payment failure spike
+- Abnormally high discount
+- Sudden product demand increase
+- Unusually low product sales
+
+The system should provide:
+
+```text
+Anomaly
+↓
+Date/Period
+↓
+Metric affected
+↓
+Magnitude
+↓
+Relevant dimensions
+```
+
+---
+
+# 28. AI Business Assistant
+
+This is the main AI component.
+
+The AI assistant shall allow users to ask questions using natural language.
+
+Examples:
+
+> "Why did sales fall this month?"
+
+> "Which products need immediate restocking?"
+
+> "Which category generated the highest profit?"
+
+> "Which payment method has the most failures?"
+
+> "Which products have high sales but low margins?"
+
+> "Show me customers contributing the most revenue."
+
+---
+
+# 29. AI Agent Architecture
+
+The agent shall **not receive the entire raw database as its prompt**.
+
+Instead:
+
+```text
+User
+ ↓
+LLM
+ ↓
+Select analytical tool
+ ↓
+Backend / Database
+ ↓
+Analytical result
+ ↓
+LLM
+ ↓
+More analysis if necessary
+ ↓
+Final explanation
+```
+
+---
+
+# 30. Analytical Tool Layer
+
+The backend shall expose controlled analytical functions.
+
+Examples:
+
+```text
+get_sales_kpis()
+get_sales_trend()
+get_category_performance()
+get_product_performance()
+get_inventory_risk()
+get_customer_analysis()
+get_geographic_analysis()
+get_payment_analysis()
+get_refund_analysis()
+get_order_status_analysis()
+get_profitability_analysis()
+get_anomalies()
+get_forecast()
+```
+
+The exact implementation may use Python functions, SQL queries, or service endpoints.
+
+---
+
+# 31. Dynamic Tool Selection
+
+The agent shall dynamically determine which analytical tool is appropriate.
+
+For example:
+
+### Question
+
+> "Which products need restocking?"
+
+Agent selects:
+
+```text
+get_inventory_risk()
+```
+
+### Question
+
+> "Why did sales decrease?"
+
+Agent may select:
+
+```text
+get_sales_trend()
+get_category_performance()
+get_product_performance()
+get_discount_profit_analysis()
+get_order_status_analysis()
+```
+
+This prevents the project from becoming a collection of manually coded chatbot responses.
+
+---
+
+# 32. Multi-Step Investigation
+
+The agent shall support multiple analytical calls for complex questions.
+
+Example:
+
+```text
+User:
+Why did profit fall?
+
+        ↓
+
+Sales comparison
+
+        ↓
+
+Category analysis
+
+        ↓
+
+Product analysis
+
+        ↓
+
+Discount analysis
+
+        ↓
+
+Refund analysis
+
+        ↓
+
+Final explanation
+```
+
+The agent should stop when sufficient evidence has been obtained.
+
+---
+
+# 33. Evidence-Based AI Responses
+
+The AI must not invent business numbers.
+
+Every numerical statement should originate from:
+
+- Database query
+- Analytical function
+- Statistical model
+- Forecasting model
+
+The LLM's role is primarily:
+
+- Interpretation
+- Explanation
+- Investigation
+- Synthesis
+- Recommendation
+
+---
+
+# 34. AI Response Structure
+
+For complex questions, the response should preferably contain:
+
+### Answer
+
+Direct answer to the user's question.
+
+### Evidence
+
+Relevant metrics supporting the answer.
+
+### Possible Causes
+
+Factors supported by the analysis.
+
+### Recommendation
+
+Suggested business actions.
+
+Example:
+
+```text
+Sales decreased by 11.8% compared with the previous period.
+
+Main evidence:
+• Category X decreased by 18%
+• Product Y accounted for a significant portion of the decline
+• Discount levels increased
+• Returned orders also increased
+
+Possible causes:
+The decline appears to be concentrated in Category X.
+
+Recommendation:
+Review Product Y pricing, inventory availability and return activity.
+```
+
+The wording should distinguish evidence from inference.
+
+---
+
+# 35. Recommendation Engine
+
+Recommendations shall be generated from analytical evidence.
+
+Examples:
+
+### Inventory
+
+> Product X is below its reorder level and has strong recent demand. Consider replenishment.
+
+### Product
+
+> Product Y has high sales but a relatively low margin. Review discount and pricing strategy.
+
+### Payment
+
+> Payment Method Z has a comparatively high failure rate. Investigate payment processing issues.
+
+### Customer
+
+> A high-value customer segment shows declining activity. Consider targeted retention actions.
+
+The system should not present recommendations as guaranteed outcomes.
+
+---
+
+# 36. Recommendation Tracking
+
+For a more durable system, recommendations should optionally be stored.
+
+Example:
+
+```text
+Recommendation_ID
+Generated_Date
+Recommendation_Type
+Entity
+Reason
+Suggested_Action
+Status
+Action_Date
+Outcome
+```
+
+Possible statuses:
+
+- New
+- Reviewed
+- Accepted
+- Rejected
+- Implemented
+
+This enables future analysis of whether recommendations were acted upon.
+
+---
+
+# 37. Unified Application
+
+The entire project should be accessible through **one web application**.
+
+The user should not need:
+
+```text
+Power BI → separate
+Python notebook → separate
+Chatbot → separate
+ML application → separate
+```
+
+Instead:
+
+```text
+              UNIFIED WEB APP
+                    │
+      ┌─────────────┼─────────────┐
+      │             │             │
+  Dashboard      Analytics     AI Agent
+      │             │             │
+      └─────────────┼─────────────┘
+                    │
+                Database
+```
+
+---
+
+# 38. Proposed Application Pages
+
+## Page 1 — Executive Overview
+
+Contains:
+
+- Revenue
+- Orders
+- Customers
+- Products
+- AOV
+- Profit
+- Refunds
+- Stock risks
+- Sales trend
+- Category performance
+
+---
+
+## Page 2 — Sales Intelligence
+
+Contains:
+
+- Revenue trend
+- Order trend
+- Units sold
+- AOV
+- Category performance
+- Brand performance
+- Product performance
+- Period comparison
+- Filters
+
+---
+
+## Page 3 — Product & Inventory
+
+Contains:
+
+- Product performance
+- Stock levels
+- Reorder alerts
+- High-demand products
+- Overstock products
+- Category/subcategory analysis
+- Profitability
+
+---
+
+## Page 4 — Customer Intelligence
+
+Contains:
+
+- Customer count
+- Customer revenue
+- Membership analysis
+- Loyalty analysis
+- Customer segmentation
+- Geographic analysis
+- Preferred-device analysis
+
+---
+
+## Page 5 — Payments & Operations
+
+Contains:
+
+- Payment success/failure
+- Payment method performance
+- Transaction fees
+- Refunds
+- Order status
+- Returned orders
+- Cancelled orders
+
+---
+
+## Page 6 — Advanced Analytics
+
+Contains:
+
+- Forecasts
+- Anomalies
+- Trend analysis
+- Demand analysis
+
+---
+
+## Page 7 — AI Business Assistant
+
+Contains:
+
+```text
+Ask a business question...
+
+[________________________________]
+
+Ask
+```
+
+And displays:
+
+- Answer
+- Evidence
+- Analysis
+- Recommendation
+
+---
+
+# 39. Global Filters
+
+Filters should be available where relevant.
+
+Possible filters:
+
+- Date range
+- Category
+- Subcategory
+- Brand
+- Product
+- State
+- City
+- Membership
+- Payment mode
+- Order status
+- Product status
+
+Filters should update the associated KPIs and charts.
+
+---
+
+# 40. Proposed Technology Stack
+
+## Frontend / Application
+
+**Streamlit**
+
+Suitable because the project requires:
+
+- Rapid BI dashboard development
+- Python integration
+- Charts
+- Filters
+- AI assistant
+- ML integration
+- One unified application
+
+---
+
+## Visualization
+
+**Plotly**
+
+For:
+
+- Line charts
+- Bar charts
+- Pie/donut charts
+- Scatter plots
+- Interactive charts
+- Time-series visualization
+
+---
+
+## Backend
+
+**Python**
+
+Responsible for:
+
+- Data processing
+- Analytics
+- ML
+- Business logic
+- AI tool execution
+
+---
+
+## Database
+
+Recommended:
+
+**PostgreSQL**
+
+For a production-oriented implementation.
+
+For a smaller prototype:
+
+**SQLite**
+
+can be used.
+
+However, PostgreSQL gives the system better long-term scalability.
+
+---
+
+## Data Processing
+
+- Pandas
+- NumPy
+
+---
+
+## Machine Learning / Analytics
+
+- Scikit-learn
+- Statsmodels where appropriate
+
+---
+
+## AI
+
+An LLM supporting:
+
+- Function/tool calling
+- Structured outputs
+- Natural-language reasoning
+
+Optional:
+
+**LangGraph**
+
+for explicit multi-step agent orchestration.
+
+---
+
+# 41. Database Architecture
+
+A possible schema:
+
+```text
+dim_customer
+     │
+     │
+fact_orders ───────── dim_product
+     │
+     │
+fact_payments
+
+dim_date
+```
+
+### Dimension tables
+
+- `dim_customer`
+- `dim_product`
+- `dim_date`
+
+### Fact tables
+
+- `fact_orders`
+- `fact_payments`
+
+This follows a BI-friendly architecture and makes analytical queries easier.
+
+---
+
+# 42. Derived Analytical Tables / Views
+
+The system may create database views such as:
+
+```text
+vw_sales_summary
+vw_product_performance
+vw_customer_performance
+vw_inventory_risk
+vw_payment_analysis
+vw_refund_analysis
+vw_category_performance
+```
+
+This prevents the AI agent from directly executing arbitrary SQL against the production database.
+
+---
+
+# 43. Security Requirements
+
+Even though this is primarily an academic BI project, security should be considered.
+
+The system should include:
+
+### Authentication
+
+Users should authenticate before accessing the application if authentication is implemented.
+
+### Authorization
+
+Different user roles may be supported:
+
+```text
+Admin
+Manager
+Analyst
+Viewer
+```
+
+---
+
+# 44. Database Security
+
+The application shall:
+
+- Use parameterized queries
+- Avoid SQL injection
+- Store database credentials securely
+- Avoid hardcoding API keys
+- Use environment variables
+- Restrict database access
+
+Example:
+
+```text
+.env
+DATABASE_URL=...
+LLM_API_KEY=...
+```
+
+The `.env` file must not be committed to Git.
+
+---
+
+# 45. AI Security
+
+The AI agent must not be allowed unrestricted database access.
+
+Instead:
+
+```text
+LLM
+ ↓
+Approved Tool
+ ↓
+Validated Query
+ ↓
+Database
+```
+
+This prevents the model from executing arbitrary destructive commands.
+
+The agent should be restricted to:
+
+```text
+SELECT / analytical operations
+```
+
+and should not have permissions for:
+
+```text
+DELETE
+DROP
+UPDATE
+INSERT
+```
+
+unless explicitly required by a future controlled workflow.
+
+---
+
+# 46. Performance Requirements
+
+For the current dataset size, the system should provide:
+
+- Dashboard loading within a few seconds
+- Interactive filters with reasonable response time
+- Analytical queries without noticeable delays
+- AI responses within an acceptable interactive time
+
+The architecture should nevertheless allow the dataset to grow substantially.
+
+---
+
+# 47. Scalability and Durability
+
+This is important for the project's **long-term scope**.
+
+The system should not be designed only around the current 5,000 customers and 5,500 orders.
+
+The architecture should support:
+
+```text
+5,000 customers
+        ↓
+50,000
+        ↓
+500,000
+        ↓
+Millions of records
+```
+
+without requiring a complete redesign.
+
+This is why:
+
+- PostgreSQL
+- relational data modeling
+- reusable analytical functions
+- database views
+- modular Python services
+- configurable filters
+- separate AI tool layer
+
+are preferable to putting everything into one Python script.
+
+---
+
+# 48. Maintainability
+
+The application should be modular.
+
+Recommended structure:
+
+```text
+ecommerce_decision_intelligence/
+│
+├── app.py
+│
+├── pages/
+│   ├── overview.py
+│   ├── sales.py
+│   ├── products.py
+│   ├── customers.py
+│   ├── payments.py
+│   ├── analytics.py
+│   └── ai_assistant.py
+│
+├── data/
+│   ├── cleaning.py
+│   ├── validation.py
+│   └── loading.py
+│
+├── database/
+│   ├── connection.py
+│   ├── models.py
+│   └── queries.py
+│
+├── analytics/
+│   ├── sales.py
+│   ├── products.py
+│   ├── customers.py
+│   ├── inventory.py
+│   ├── payments.py
+│   └── anomalies.py
+│
+├── forecasting/
+│   └── forecasting.py
+│
+├── agent/
+│   ├── agent.py
+│   ├── tools.py
+│   └── prompts.py
+│
+├── models/
+│
+├── config/
+│
+└── requirements.txt
+```
+
+The exact structure can change, but the separation of responsibilities should remain.
+
+---
+
+# 49. Reusability
+
+Analytical functions should be reusable.
+
+For example:
+
+```python
+get_sales_trend(
+    start_date,
+    end_date,
+    category=None,
+    state=None
+)
+```
+
+rather than creating a separate function for every possible filter combination.
+
+This allows the same function to be used by:
+
+- Dashboard
+- AI agent
+- Reports
+- Future APIs
+
+---
+
+# 50. Logging and Monitoring
+
+The system should maintain application logs for:
+
+- Errors
+- Failed database operations
+- AI tool failures
+- Data processing failures
+- Authentication events if authentication exists
+
+AI interactions may also be logged in a privacy-conscious manner for debugging and evaluation.
+
+---
+
+
+
+# 52. Data Pipeline
+
+The complete data pipeline should be:
+
+```text
+CSV Files
+   ↓
+Data Ingestion
+   ↓
+Data Cleaning
+   ↓
+Data Validation
+   ↓
+Data Transformation
+   ↓
+Database Loading
+   ↓
+Analytical Layer
+   ↓
+BI Dashboard
+   ↓
+Advanced Analytics
+   ↓
+AI Agent
+   ↓
+Decision Support
+```
+
+---
+
+# 53. Error Handling
+
+The system shall gracefully handle:
+
+- Missing data
+- Invalid dates
+- Invalid numeric values
+- Missing relationships
+- Database connection failure
+- AI API failure
+- Forecasting failure
+- Empty analytical results
+
+Example:
+
+Instead of:
+
+> Application crashed
+
+display:
+
+> No sales records are available for the selected period.
+
+---
+
+
+---
+
+# 55. Explainability
+
+The system should make analytical findings understandable.
+
+For example:
+
+Instead of:
+
+> "Inventory risk = HIGH"
+
+show:
+
+```text
+Product: XYZ
+Current stock: 42
+Reorder level: 100
+Recent units sold: 180
+
+Reason:
+Stock is below the defined reorder level while demand remains high.
+```
+
+---
+
+
+
+---
+
+# 56. Reporting
+
+The system should support generation of analytical summaries such as:
+
+### Executive Summary
+
+```text
+Revenue
+Order volume
+Growth
+Top category
+Top product
+Inventory risks
+Refund activity
+Major anomalies
+```
+
+Reports should be generated from current database results.
+
+---
+
+# 57. Functional Requirements Summary
+
+| ID | Requirement |
+|---|---|
+| FR-01 | Import customer data |
+| FR-02 | Import order data |
+| FR-03 | Import product data |
+| FR-04 | Import payment data |
+| FR-05 | Clean data |
+| FR-06 | Validate data |
+| FR-07 | Store data in database |
+| FR-08 | Display executive KPIs |
+| FR-09 | Display sales analytics |
+| FR-10 | Display product analytics |
+| FR-11 | Display inventory analytics |
+| FR-12 | Display customer analytics |
+| FR-13 | Display geographic analytics |
+| FR-14 | Display payment analytics |
+| FR-15 | Display refund analytics |
+| FR-16 | Provide interactive filtering |
+| FR-17 | Provide drill-down analysis |
+| FR-18 | Provide comparison analysis |
+| FR-19 | Provide profitability analysis |
+| FR-20 | Detect anomalies |
+| FR-21 | Provide forecasting |
+| FR-22 | Provide natural-language AI assistant |
+| FR-23 | Dynamically select analytical tools |
+| FR-24 | Support multi-step investigations |
+| FR-25 | Generate evidence-based explanations |
+| FR-26 | Generate recommendations |
+| FR-27 | Track recommendations |
+| FR-28 | Maintain logs |
+| FR-29 | Handle failures gracefully |
+| FR-30 | Support scalable architecture |
+
+---
+
+# 59. Non-Functional Requirements
+
+| Category | Requirement |
+|---|---|
+| Performance | Dashboard interactions should respond quickly |
+| Scalability | Architecture should support substantially larger datasets |
+| Security | Protect database and API credentials |
+| Reliability | BI system should remain usable if AI fails |
+| Maintainability | Modular code architecture |
+| Usability | Simple and understandable dashboard |
+| Extensibility | New datasets/modules can be added |
+| Accuracy | Calculations must originate from validated data |
+| Explainability | Analytical results should be understandable |
+| Availability | Application should remain stable during normal use |
+| Reproducibility | Data processing should be repeatable |
+
+---
+
+# 60. Project Boundaries
+
+The project should be considered as **four layers**.
+
+## Layer 1 — Data Foundation
+
+```text
+Customers
+Orders
+Products
+Payments
+```
+
+↓
+
+Cleaning + Validation + Database
+
+---
+
+## Layer 2 — Business Intelligence
+
+```text
+KPIs
+Sales
+Products
+Customers
+Inventory
+Payments
+Refunds
+Operations
+Geography
+```
+
+This is the **core layer**.
+
+---
+
+## Layer 3 — Advanced Analytics
+
+```text
+Forecasting
+Segmentation
+Anomaly Detection
+Profitability Analysis
+```
+
+This supports the BI layer.
+
+---
+
+## Layer 4 — AI Decision Support
+
+```text
+Natural Language
+       ↓
+Tool Selection
+       ↓
+Investigation
+       ↓
+Evidence
+       ↓
+Explanation
+       ↓
+Recommendation
+```
+
+This makes the system intelligent rather than simply visual.
+
+---
+
+# 61. Complete System Workflow
+
+The final system workflow should be:
+
+```text
+                    DATA SOURCES
+                        │
+          ┌─────────────┼─────────────┐
+          │             │             │
+      Customers       Orders       Products
+                                      │
+                                   Payments
+          │             │             │
+          └─────────────┼─────────────┘
+                        ↓
+               DATA PREPROCESSING
+                        ↓
+             CLEANING & VALIDATION
+                        ↓
+                   DATABASE
+                        ↓
+          ┌─────────────┼─────────────┐
+          │             │             │
+          ▼             ▼             ▼
+       BI LAYER     ANALYTICS      AI LAYER
+          │             │             │
+          │       Forecasting        │
+          │       Anomalies          │
+          │       Segmentation       │
+          │             │             │
+          └─────────────┼─────────────┘
+                        ↓
+              DECISION INTELLIGENCE
+                        ↓
+       ┌────────────────┼────────────────┐
+       │                │                │
+       ▼                ▼                ▼
+   DASHBOARDS        INSIGHTS      RECOMMENDATIONS
+       │                │                │
+       └────────────────┼────────────────┘
+                        ↓
+                UNIFIED WEB APP
+```
+
+---
+
+# 62. Project Development Phases
+
+## Phase 1 — Dataset Understanding
+
+- Inspect all CSVs
+- Understand columns
+- Identify relationships
+- Identify data-quality issues
+- Create data dictionary
+
+---
+
+## Phase 2 — Data Engineering
+
+- Clean CSVs
+- Convert dates
+- Convert currencies
+- Remove unnecessary fields
+- Validate relationships
+- Load PostgreSQL
+
+---
+
+## Phase 3 — Core BI
+
+Build:
+
+1. Executive Dashboard
+2. Sales Dashboard
+3. Product & Inventory Dashboard
+4. Customer Dashboard
+5. Payment & Operations Dashboard
+
+---
+
+## Phase 4 — Advanced Analytics
+
+Implement:
+
+1. Profitability
+2. Trend analysis
+3. Anomaly detection
+4. Forecasting
+5. Customer segmentation
+
+---
+
+## Phase 5 — AI Agent
+
+Implement:
+
+1. Natural-language interface
+2. Analytical tools
+3. Dynamic tool selection
+4. Multi-step investigation
+5. Evidence synthesis
+6. Recommendations
+
+---
+
+## Phase 6 — Integration
+
+Combine everything into the unified web application.
+
+---
+
+## Phase 7 — Testing
+
+Test:
+
+- Data accuracy
+- Database relationships
+- KPI calculations
+- Filters
+- Charts
+- AI tools
+- AI responses
+- Error handling
+- Performance
+
+---
+
+## Phase 8 — Deployment
+
+Deploy the application and database using an appropriate hosting architecture.
+
+---
+
+# 63. Testing Requirements
+
+## Unit Testing
+
+Test:
+
+- Data cleaning functions
+- KPI calculations
+- Profit calculations
+- Inventory classification
+- Analytical functions
+
+---
+
+## Integration Testing
+
+Test:
+
+```text
+Dashboard → Database
+AI Agent → Analytical Tools
+Analytical Tools → Database
+Forecasting → Dashboard
+```
+
+---
+
+## AI Testing
+
+Prepare a test set of business questions.
+
+For example:
+
+```text
+Which category has the highest revenue?
+Which products are below reorder level?
+Why did revenue decline?
+Which payment method has the highest failure rate?
+Which products have high sales but low margins?
+```
+
+Verify that:
+
+- Correct tools are selected
+- Numbers are correct
+- Evidence is relevant
+- Recommendations are grounded in data
+- The agent doesn't invent information
+
+---
+
+# 64. Acceptance Criteria
+
+The project will be considered successfully implemented when:
+
+### Data
+
+- All four datasets can be loaded.
+- Data is cleaned and validated.
+- Relationships are correctly established.
+
+### BI
+
+- Executive KPIs work.
+- Sales analysis works.
+- Product analysis works.
+- Inventory analysis works.
+- Customer analysis works.
+- Payment/refund analysis works.
+- Filters work.
+- Drilldowns work.
+
+### Analytics
+
+- Trend analysis works.
+- Profitability analysis works.
+- At least one forecasting technique works.
+- Anomaly detection works.
+
+### AI
+
+- User can ask natural-language questions.
+- Agent can select analytical tools.
+- Agent can perform multi-step investigations.
+- Responses use actual analytical results.
+- Recommendations are evidence-based.
+
+### Application
+
+- All components are available from one web application.
+- The system handles errors gracefully.
+- Credentials are secured.
+- Application structure is modular.
+
+---
+
+# 65. Future Scope
+
+The architecture should allow future expansion without changing the fundamental system.
+
+Possible future modules include:
+
+### Real-time data
+
+```text
+E-commerce platform
+       ↓
+Streaming/API
+       ↓
+Decision Intelligence System
+```
+
+### Supplier intelligence
+
+- Supplier performance
+- Lead time
+- Supplier risk
+
+### Marketing intelligence
+
+- Campaign performance
+- Customer acquisition cost
+- Conversion analysis
+
+### Recommendation optimization
+
+- Price optimization
+- Promotion optimization
+- Inventory optimization
+
+### Automated actions
+
+With proper authorization:
+
+```text
+AI Recommendation
+       ↓
+Human Approval
+       ↓
+Business System
+       ↓
+Action
+```
+
+### Additional AI capabilities
+
+- Automated executive reports
+- Voice-based business assistant
+- Natural-language dashboard generation
+- Automated anomaly alerts
+- Personalized manager dashboards
+
+---
+
+# 66. Final Project Definition
+
+The project should ultimately be described as:
+
+> **The E-Commerce Decision Intelligence System is a unified Business Intelligence platform that integrates customer, order, product, inventory, payment, and operational data to provide interactive dashboards, analytical insights, trend and anomaly detection, supporting predictive analytics, and an AI-powered business assistant capable of performing multi-step investigations and generating evidence-based recommendations.**
+
+The most important point is the **scope hierarchy**:
+
+```text
+                 E-COMMERCE
+               DECISION INTELLIGENCE
+                       │
+                       ▼
+             BUSINESS INTELLIGENCE
+                 ─── CORE ───
+                       │
+       ┌───────────────┼────────────────┐
+       ▼               ▼                ▼
+   Dashboards      Analytics        Decision Support
+       │               │                │
+       │               ▼                ▼
+       │          Forecasting        AI Agent
+       │          Anomalies          Root Cause
+       │          Segmentation       Recommendations
+       │
+       └───────────────┬────────────────┘
+                       ▼
+                UNIFIED WEB APP
+```
+
+**Dont have fallbacks with default values and data if error properly convey that it is errord in the application ***.
