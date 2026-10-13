@@ -19,10 +19,11 @@ from database.connection import get_connection, create_schema, db_cursor
 logger = logging.getLogger(__name__)
 
 
-def load_all(progress_callback=None) -> dict:
+def load_all(progress_callback=None, refresh_inferences: bool = False) -> dict:
     """
     Full ETL pipeline. Returns a summary dict with row counts and issues.
     progress_callback(step: str, pct: int) → called to update a progress bar.
+    refresh_inferences: If True, regenerates inferences; otherwise deferred until user clicks Re-sync.
     """
     summary = {
         "run_time": datetime.now().isoformat(),
@@ -170,13 +171,14 @@ def load_all(progress_callback=None) -> dict:
     finally:
         conn.close()
 
-    _progress("Synchronizing AI chart inferences for new data…", 95)
-    try:
-        from analytics.inferences import refresh_all_chart_inferences
-        inf_count = refresh_all_chart_inferences()
-        summary["inferences_refreshed"] = inf_count
-    except Exception as e:
-        logger.warning("Could not auto-refresh inferences during load: %s", e)
+    if refresh_inferences:
+        _progress("Synchronizing AI chart inferences for new data…", 95)
+        try:
+            from analytics.inferences import refresh_all_chart_inferences
+            inf_count = refresh_all_chart_inferences()
+            summary["inferences_refreshed"] = inf_count
+        except Exception as e:
+            logger.warning("Could not auto-refresh inferences during load: %s", e)
 
     _progress("Done!", 100)
     logger.info("ETL complete: %s", summary["rows_loaded"])

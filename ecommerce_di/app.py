@@ -447,13 +447,13 @@ def _data_management_page():
                 updated_payments.to_csv(payments_path, index=False)
 
 
-                # 3. Rebuild star schema warehouse & refresh inferences
-                with st.spinner("Rebuilding warehouse and updating all dashboard analytics & inferences…"):
-                    summary = load_all()
+                # 3. Rebuild star schema warehouse (pure data injection, inferences refreshed manually when desired)
+                with st.spinner("Rebuilding warehouse and updating all dashboard charts & metrics…"):
+                    summary = load_all(refresh_inferences=False)
                     st.success(
                         f"✅ **New Transaction {new_order_id} recorded successfully!** "
                         f"Warehouse updated to {summary['rows_loaded'].get('orders', 0):,} orders. "
-                        f"All charts, metrics, and AI inferences are now refreshed."
+                        f"All charts & metrics are now refreshed."
                     )
                     st.rerun()
 
@@ -496,10 +496,10 @@ def _data_management_page():
                         existing_df = pd.read_csv(target_path, dtype=str)
                         combined_df = pd.concat([existing_df, new_df], ignore_index=True)
                         pk_col = {
-                            "Orders.csv": "order_id",
-                            "Customers.csv": "customer_id",
-                            "Products.csv": "product_id",
-                            "Payments.csv": "payment_id",
+                            "Orders.csv": "Order_ID",
+                            "Customers.csv": "Customer_ID",
+                            "Products.csv": "Product_ID",
+                            "Payments.csv": "Payment_ID",
                         }.get(target_file_name)
                         if pk_col and pk_col in combined_df.columns:
                             combined_df = combined_df.drop_duplicates(subset=[pk_col], keep="last")
@@ -509,14 +509,103 @@ def _data_management_page():
                         new_df.to_csv(target_path, index=False)
                         st.success(f"Replaced {target_file_name} with {len(new_df):,} rows.")
 
-                    # Trigger ETL
-                    with st.spinner("Rebuilding Star Schema & updating all metrics & inferences…"):
-                        summary = load_all()
-                        st.success("✅ Warehouse successfully updated! All dashboards and AI tools are now in sync.")
+                    # Trigger ETL (pure data injection, inferences refreshed manually when desired)
+                    with st.spinner("Rebuilding Star Schema & updating all dashboard charts & metrics…"):
+                        summary = load_all(refresh_inferences=False)
+                        st.success("✅ Warehouse successfully updated! All dashboards and charts are now updated.")
                         st.rerun()
 
             except Exception as ex:
                 st.error(f"Error reading uploaded file: {ex}")
+
+        st.markdown("---")
+        st.markdown("#### 🧪 Test Data Templates & 1-Click Injection")
+        st.markdown(
+            '<p style="color:#94a3b8;font-size:0.82rem">'
+            'Use this to immediately test the end-to-end pipeline: inject pre-formatted sample orders, '
+            'watch the data hash change, and verify how all charts and AI inferences adapt dynamically.'
+            '</p>',
+            unsafe_allow_html=True,
+        )
+
+        sample_orders_csv = (
+            "Order_ID,Order_Date,Customer_ID,Product_ID,Product_Name,Quantity (nos.),Unit_Price,Discount_Amount,Tax_Amount,Shipping_Charge,Payment_Mode,Order_Status,Total_Amount\n"
+            "ORD-NEW-9001,2023-12-15,0000-01,PD-001,Niviea Fitness Model 1,3,18044,1500,2500,50,UPI,Delivered,55132\n"
+            "ORD-NEW-9002,2023-12-20,0000-02,PD-003,HP TV Model 3,2,19112,2000,1800,100,Credit Card,Delivered,38124\n"
+            "ORD-NEW-9003,2023-12-25,0000-03,PD-251,Lotus Skincare Model 251,5,33721,5000,8000,150,Net Banking,Delivered,171755\n"
+        )
+        sample_payments_csv = (
+            "Payment_ID,Order_ID,Payment_Date,Payment_Mode,Payment_Status, Transaction_Fee , Refund_Amount ,Refund_Date\n"
+            "PAY-NEW-9001,ORD-NEW-9001,2023-12-15,UPI,Success, ₹ 275.66 , ₹ -   ,\n"
+            "PAY-NEW-9002,ORD-NEW-9002,2023-12-20,Credit Card,Success, ₹ 380.00 , ₹ -   ,\n"
+            "PAY-NEW-9003,ORD-NEW-9003,2023-12-25,Net Banking,Success, ₹ 850.00 , ₹ -   ,\n"
+        )
+
+        col_tmpl1, col_tmpl2 = st.columns(2)
+        with col_tmpl1:
+            st.download_button(
+                "📥 Download Sample Orders CSV",
+                data=sample_orders_csv,
+                file_name="Sample_New_Orders.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+        with col_tmpl2:
+            st.download_button(
+                "📥 Download Sample Payments CSV",
+                data=sample_payments_csv,
+                file_name="Sample_New_Payments.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
+        if st.button("🚀 1-Click Inject Sample Test Batch (Pure Data Injection)", type="primary", use_container_width=True):
+            try:
+                import io
+                import time
+                import pandas as pd
+
+                batch_ts = int(time.time())
+                # Generate unique order IDs per batch so each click adds brand-new orders
+                dynamic_orders_csv = (
+                    "Order_ID,Order_Date,Customer_ID,Product_ID,Product_Name,Quantity (nos.),Unit_Price,Discount_Amount,Tax_Amount,Shipping_Charge,Payment_Mode,Order_Status,Total_Amount\n"
+                    f"ORD-TEST-{batch_ts}-1,2023-12-15,0000-01,PD-001,Niviea Fitness Model 1,3,18044,1500,2500,50,UPI,Delivered,55132\n"
+                    f"ORD-TEST-{batch_ts}-2,2023-12-20,0000-02,PD-003,HP TV Model 3,2,19112,2000,1800,100,Credit Card,Delivered,38124\n"
+                    f"ORD-TEST-{batch_ts}-3,2023-12-25,0000-03,PD-251,Lotus Skincare Model 251,5,33721,5000,8000,150,Net Banking,Delivered,171755\n"
+                )
+                dynamic_payments_csv = (
+                    "Payment_ID,Order_ID,Payment_Date,Payment_Mode,Payment_Status, Transaction_Fee , Refund_Amount ,Refund_Date\n"
+                    f"PAY-TEST-{batch_ts}-1,ORD-TEST-{batch_ts}-1,2023-12-15,UPI,Success, ₹ 275.66 , ₹ -   ,\n"
+                    f"PAY-TEST-{batch_ts}-2,ORD-TEST-{batch_ts}-2,2023-12-20,Credit Card,Success, ₹ 380.00 , ₹ -   ,\n"
+                    f"PAY-TEST-{batch_ts}-3,ORD-TEST-{batch_ts}-3,2023-12-25,Net Banking,Success, ₹ 850.00 , ₹ -   ,\n"
+                )
+
+                sample_ord_df = pd.read_csv(io.StringIO(dynamic_orders_csv), dtype=str)
+                sample_pay_df = pd.read_csv(io.StringIO(dynamic_payments_csv), dtype=str)
+
+                # Append to Orders.csv
+                ord_path = files["Orders.csv"]
+                ex_ord = pd.read_csv(ord_path, dtype=str) if ord_path.exists() else pd.DataFrame()
+                comb_ord = pd.concat([ex_ord, sample_ord_df], ignore_index=True)
+                comb_ord.to_csv(ord_path, index=False)
+
+                # Append to Payments.csv
+                pay_path = files["Payments.csv"]
+                ex_pay = pd.read_csv(pay_path, dtype=str) if pay_path.exists() else pd.DataFrame()
+                comb_pay = pd.concat([ex_pay, sample_pay_df], ignore_index=True)
+                comb_pay.to_csv(pay_path, index=False)
+
+                with st.spinner("Injecting data into CSVs and updating warehouse schema…"):
+                    # Fast pure data injection: refresh_inferences=False
+                    summary = load_all(refresh_inferences=False)
+                    st.success(
+                        f"✅ **Data Injected Successfully!** 3 new orders and payments added. "
+                        f"Warehouse now has **{summary['rows_loaded']['orders']:,}** orders. "
+                        f"All charts & metrics are updated. (Inferences remain unchanged until you click Re-sync in Tab 3)."
+                    )
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Error during 1-click test injection: {e}")
 
     # ─────────────── TAB 3: INFERENCES STUDIO ──────────────────────────────────
     with tab_inf:
