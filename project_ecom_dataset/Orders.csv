@@ -1,4 +1,4 @@
-﻿Order_ID,Order_Date,Customer_ID,Product_ID,Product_Name,Quantity (nos.),Unit_Price,Discount_Amount,Tax_Amount,Shipping_Charge,Payment_Mode,Order_Status,Total_Amount
+Order_ID,Order_Date,Customer_ID,Product_ID,Product_Name,Quantity (nos.),Unit_Price,Discount_Amount,Tax_Amount,Shipping_Charge,Payment_Mode,Order_Status,Total_Amount
 ORD-001,45250,0000-01,PD-001,Niviea Fitness Model 1,4,18044,1719,1817,50,Debit Card,Delivered,72324
 ORD-002,45015,0000-02,PD-251,Lotus Skincare Model 251,2,33721,4842,609,50,Debit Card,Returned,63259
 ORD-003,45126,0000-03,PD-251,Lotus Skincare Model 251,1,34317,2405,262,150,Net Banking,Cancelled,32324
@@ -5499,3 +5499,4 @@ ORD-5497,45149,0000-5497,PD-029,Livon Haircare Model 29,3,25674,4127,665,100,Cre
 ORD-5498,45046,0000-5498,PD-030,FabIndia Bags Model 30,1,31792,4188,521,0,UPI,Delivered,28125
 ORD-5499,45054,0000-5499,PD-031,Loreal Haircare Model 31,2,4159,1514,873,0,Net Banking,Delivered,7677
 ORD-5500,45049,0000-5500,PD-032,Max Fashion Bags Model 32,3,8121,4212,1537,50,Debit Card,Delivered,21738
+ORD-LIVE-1791896261,2026-10-13,CUST-0001,PD-118,Adidas Bags Model 118,2,20986.0,150.0,2091.1,0,UPI,Delivered,41822.0

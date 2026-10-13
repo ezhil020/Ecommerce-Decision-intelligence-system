@@ -8,9 +8,10 @@ import plotly.express as px
 from analytics.sales import (
     get_sales_trend, get_category_performance, get_brand_performance,
     get_product_performance, get_period_comparison, get_day_of_week_analysis,
+    get_executive_kpis,
 )
 from views.ui_utils import (
-    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, fmt_pct,
+    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state, alert_banner, render_inference_card,
 )
 
@@ -18,9 +19,56 @@ from views.ui_utils import (
 def render(filters: dict):
     st.markdown("## Sales Intelligence")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Revenue, order and product performance analysis with AI inferences</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Revenue, order, discount and product performance analysis with AI inferences</p>',
         unsafe_allow_html=True,
     )
+
+    # ── Executive Sales KPIs ──────────────────────────────────────────────────
+    with st.spinner("Loading Sales KPIs…"):
+        kpis = get_executive_kpis(filters)
+
+    rev = kpis.get("total_revenue", 0)
+    gp = kpis.get("total_gross_profit", 0)
+    margin_pct = (gp / rev * 100) if rev > 0 else 0
+    orders = kpis.get("total_orders", 0)
+    aov = kpis.get("avg_order_value", 0)
+    disc = kpis.get("total_discount", 0)
+    units = kpis.get("total_units_sold", 0)
+
+    # Filter status banner if filters are active
+    active_filters_list = []
+    if filters.get("start_date") or filters.get("end_date"):
+        active_filters_list.append(f"📅 Date: {filters.get('start_date', 'Start')} to {filters.get('end_date', 'End')}")
+    if filters.get("category"):
+        active_filters_list.append(f"🏷️ Category: {', '.join(filters['category'][:3])}")
+    if filters.get("state"):
+        active_filters_list.append(f"📍 State: {', '.join(filters['state'][:3])}")
+    if filters.get("payment_mode"):
+        active_filters_list.append(f"💳 Payment: {', '.join(filters['payment_mode'][:2])}")
+
+    if active_filters_list:
+        filter_str = " &nbsp;|&nbsp; ".join(active_filters_list)
+        st.markdown(
+            f'<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);'
+            f'border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:0.8rem;color:#cbd5e1">'
+            f'<b>Active Filters Applied:</b> {filter_str}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    col_k1, col_k2, col_k3, col_k4, col_k5 = st.columns(5)
+    with col_k1:
+        kpi_card("Sales Revenue", fmt_currency(rev), subtitle="Net realized GMV", icon="💰", accent=COLORS["primary"])
+    with col_k2:
+        kpi_card("Order Count", fmt_number(orders), subtitle=f"Units: {fmt_number(units)}", icon="📦", accent=COLORS["info"])
+    with col_k3:
+        kpi_card("Average Order Value", fmt_currency(aov), subtitle="Basket benchmark", icon="🎯", accent=COLORS["success"])
+    with col_k4:
+        kpi_card("Gross Profit", fmt_currency(gp), subtitle=f"Margin: {margin_pct:.1f}%", icon="📈", accent=COLORS["secondary"])
+    with col_k5:
+        kpi_card("Promotional Discounts", fmt_currency(disc), subtitle="Margin impact", icon="🏷️", accent=COLORS["warning"])
+
+    st.markdown("---")
 
     # ── Controls ───────────────────────────────────────────────────────────────
     col1, col2 = st.columns([2, 1])
@@ -43,7 +91,7 @@ def render(filters: dict):
     trend_df = get_sales_trend(granularity, filters)
 
     if trend_df.empty:
-        empty_state("No sales data for the selected period / filters.")
+        empty_state("No sales data found for the selected filter range. Please clear or expand the date range in Global Filters (dataset covers 2023-01-01 to 2023-12-31).")
     else:
         tab1, tab2, tab3, tab4 = st.tabs(["Revenue & Discounts", "Orders", "Average Order Value", "Weekly Seasonality"])
 

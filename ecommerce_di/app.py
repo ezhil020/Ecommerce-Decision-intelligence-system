@@ -140,11 +140,38 @@ with st.sidebar:
     # ── Filters ───────────────────────────────────────────────────────────────
     filters = {}
     with st.expander("🔍 Global Filters", expanded=True):
+        # Set intelligent date bounds based on database range
+        default_min, default_max = None, None
+        if db_exists():
+            try:
+                from database.connection import query_df
+                d_bounds = query_df("SELECT MIN(order_date) AS min_d, MAX(order_date) AS max_d FROM fact_orders").iloc[0]
+                if d_bounds["min_d"] and d_bounds["max_d"]:
+                    import datetime
+                    default_min = datetime.date.fromisoformat(str(d_bounds["min_d"]))
+                    default_max = datetime.date.fromisoformat(str(d_bounds["max_d"]))
+            except Exception:
+                pass
+
         col1, col2 = st.columns(2)
         with col1:
-            start_date = st.date_input("From", value=None, format="YYYY-MM-DD")
+            start_date = st.date_input(
+                "From",
+                value=None,
+                min_value=default_min,
+                max_value=default_max,
+                format="YYYY-MM-DD",
+                help=f"Dataset starts on {default_min}" if default_min else None,
+            )
         with col2:
-            end_date   = st.date_input("To",   value=None, format="YYYY-MM-DD")
+            end_date   = st.date_input(
+                "To",
+                value=None,
+                min_value=default_min,
+                max_value=default_max,
+                format="YYYY-MM-DD",
+                help=f"Dataset ends on {default_max}" if default_max else None,
+            )
 
         if start_date:
             filters["start_date"] = str(start_date)

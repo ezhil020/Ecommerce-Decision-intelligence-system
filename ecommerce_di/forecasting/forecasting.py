@@ -11,8 +11,16 @@ from config.settings import FORECAST_PERIODS
 logger = logging.getLogger(__name__)
 
 
-def _get_monthly_revenue() -> pd.DataFrame:
-    sql = """
+def _get_monthly_revenue(filters: dict | None = None) -> pd.DataFrame:
+    from analytics.sales import _build_where
+    where, params = _build_where(filters)
+    base_where = "WHERE o.order_status NOT IN ('Cancelled','Returned')"
+    if where:
+        sql_where = f"{where} AND o.order_status NOT IN ('Cancelled','Returned')"
+    else:
+        sql_where = base_where
+
+    sql = f"""
         SELECT
             d.year || '-' || printf('%02d', d.month) AS period,
             d.year,
@@ -21,11 +29,13 @@ def _get_monthly_revenue() -> pd.DataFrame:
             COUNT(o.order_id)   AS orders
         FROM fact_orders o
         JOIN dim_date d ON o.order_date_id = d.date_id
-        WHERE o.order_status NOT IN ('Cancelled','Returned')
+        LEFT JOIN dim_customer c ON o.customer_id = c.customer_id
+        LEFT JOIN dim_product  p ON o.product_id  = p.product_id
+        {sql_where}
         GROUP BY d.year, d.month
         ORDER BY d.year, d.month
     """
-    return query_df(sql)
+    return query_df(sql, params)
 
 
 def _next_periods(last_year: int, last_month: int, n: int) -> list[str]:
@@ -41,16 +51,16 @@ def _next_periods(last_year: int, last_month: int, n: int) -> list[str]:
     return periods
 
 
-def forecast_revenue(periods: int = FORECAST_PERIODS) -> dict:
+def forecast_revenue(periods: int = FORECAST_PERIODS, filters: dict | None = None) -> dict:
     """
     Forecast monthly revenue using Holt-Winters Exponential Smoothing.
     Returns dict with 'historical', 'forecast', 'method'.
     """
-    df = _get_monthly_revenue()
+    df = _get_monthly_revenue(filters)
 
     if df.empty or len(df) < 3:
         return {
-            "error": "Insufficient historical data for forecasting (need ≥ 3 months).",
+            "error": "Insufficient historical data for forecasting (need ≥ 3 months). Adjust date or category filters.",
             "historical": df,
             "forecast": pd.DataFrame(),
             "method": "none",
@@ -109,13 +119,13 @@ def forecast_revenue(periods: int = FORECAST_PERIODS) -> dict:
     }
 
 
-def forecast_orders(periods: int = FORECAST_PERIODS) -> dict:
+def forecast_orders(periods: int = FORECAST_PERIODS, filters: dict | None = None) -> dict:
     """Forecast monthly order count."""
-    df = _get_monthly_revenue()
+    df = _get_monthly_revenue(filters)
 
     if df.empty or len(df) < 3:
         return {
-            "error": "Insufficient historical data for forecasting.",
+            "error": "Insufficient historical data for forecasting. Adjust date or category filters.",
             "historical": df,
             "forecast": pd.DataFrame(),
             "method": "none",

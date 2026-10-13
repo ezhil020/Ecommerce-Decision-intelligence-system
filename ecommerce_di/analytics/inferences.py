@@ -23,6 +23,10 @@ def get_current_data_fingerprint() -> str:
     Compute a fast MD5 hash of key warehouse statistics.
     Changes whenever rows are added, updated, or reloaded.
     """
+    from database.connection import db_exists
+    if not db_exists():
+        return "base_v1"
+
     try:
         df = query_df("""
             SELECT 

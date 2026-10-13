@@ -42,9 +42,9 @@ def render(filters: dict):
 
         with st.spinner("Computing forecast…"):
             if metric == "Revenue":
-                result = forecast_revenue(periods)
+                result = forecast_revenue(periods, filters=filters)
             else:
-                result = forecast_orders(periods)
+                result = forecast_orders(periods, filters=filters)
 
         if "error" in result and result["error"]:
             st.error(result["error"])

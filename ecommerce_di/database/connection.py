@@ -199,8 +199,16 @@ def create_schema():
 def db_exists() -> bool:
     """Return True if the database has been populated (fact_orders has rows)."""
     try:
-        with db_cursor() as cur:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='fact_orders'")
+            if not cur.fetchone():
+                return False
             cur.execute("SELECT COUNT(*) FROM fact_orders")
-            return cur.fetchone()[0] > 0
+            row = cur.fetchone()
+            return bool(row and row[0] > 0)
+        finally:
+            conn.close()
     except Exception:
         return False
