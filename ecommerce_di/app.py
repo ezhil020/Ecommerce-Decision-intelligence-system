@@ -420,7 +420,7 @@ def _data_management_page():
 
                     new_order_data = {
                         "order_id": test_ord_id,
-                        "order_date": str(date.today()),
+                        "order_date": "2023-12-31",
                         "customer_id": sample_cust_id,
                         "product_id": sample_prod["product_id"],
                         "product_name": sample_prod["product_name"],
@@ -444,7 +444,7 @@ def _data_management_page():
                     new_pay_data = {
                         "payment_id": test_pay_id,
                         "order_id": test_ord_id,
-                        "payment_date": str(date.today()),
+                        "payment_date": "2023-12-31",
                         "payment_mode": "UPI",
                         "payment_status": "Success",
                         "transaction_fee": "25.0",
@@ -482,7 +482,7 @@ def _data_management_page():
                     cust_id_input = cust_options[sel_cust_label]
                 else:
                     cust_id_input = st.text_input("Customer ID", value="0000-01", key="form_cust_id")
-                order_date_input = st.date_input("Order Date", value=date.today(), key="form_order_date")
+                order_date_input = st.date_input("Order Date", value=date(2023, 12, 31), key="form_order_date")
                 payment_mode_input = st.selectbox(
                     "Payment Mode",
                     ["UPI", "Credit Card", "Debit Card", "Net Banking", "Cash on Delivery"],

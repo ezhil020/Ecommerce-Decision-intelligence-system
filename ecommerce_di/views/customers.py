@@ -78,6 +78,7 @@ def render(filters: dict):
                 marker=dict(color=CATEGORY_COLORS[:len(seg_summary)]),
                 hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
+            fig2.update_xaxes(type="category")
             chart_layout(fig2, "Revenue Contribution by Segment", height=300)
             st.plotly_chart(fig2, use_container_width=True)
 
@@ -130,6 +131,7 @@ def render(filters: dict):
                 marker_color=COLORS["secondary"],
                 hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
+            fig4.update_xaxes(type="category")
             chart_layout(fig4, "Revenue by Membership Tier", height=280)
             st.plotly_chart(fig4, use_container_width=True)
 
@@ -152,6 +154,7 @@ def render(filters: dict):
                 marker_color=COLORS["info"],
                 hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
+            fig5.update_xaxes(type="category")
             chart_layout(fig5, height=270)
             st.plotly_chart(fig5, use_container_width=True)
 
@@ -191,6 +194,7 @@ def render(filters: dict):
                         colorscale="Viridis", showscale=True),
             hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
         ))
+        fig7.update_xaxes(type="category")
         chart_layout(fig7, "Top States by Revenue", height=340)
         st.plotly_chart(fig7, use_container_width=True)
         render_inference_card("customers_geo", "Geographic Demand Clusters")

@@ -199,7 +199,9 @@ def render(filters: dict):
             fig_r.update_layout(
                 yaxis=dict(title="Return Rate (%)"),
                 yaxis2=dict(title="Avg Margin (%)", overlaying="y", side="right", showgrid=False),
+                bargap=0.35,
             )
+            fig_r.update_xaxes(type="category")
             chart_layout(fig_r, "Return Rate & Margin by Rating Tier", height=320)
             st.plotly_chart(fig_r, use_container_width=True)
 

@@ -10,7 +10,7 @@ from analytics.sales import get_executive_kpis, get_sales_trend, get_category_pe
 from analytics.inventory import get_inventory_risk
 from analytics.payments import get_order_status_breakdown
 from views.ui_utils import (
-    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
+    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, format_period_label,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state, render_inference_card,
 )
 
@@ -68,25 +68,30 @@ def render(filters: dict):
         if trend_df.empty:
             empty_state("No sales data available for selected filters.")
         else:
+            trend_df = trend_df.copy()
+            trend_df["display_period"] = trend_df["period"].apply(lambda p: format_period_label(p, "monthly"))
+
             fig = go.Figure()
             fig.add_trace(go.Scatter(
-                x=trend_df["period"], y=trend_df["revenue"],
+                x=trend_df["display_period"], y=trend_df["revenue"],
                 mode="lines+markers",
-                name="Revenue",
-                line=dict(color=COLORS["primary"], width=2.5),
-                marker=dict(size=5, color=COLORS["primary"]),
+                name="Net Revenue",
+                line=dict(color=COLORS["primary"], width=3),
+                marker=dict(size=7, color=COLORS["primary"]),
                 fill="tozeroy",
                 fillcolor="rgba(99,102,241,0.08)",
                 hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
             fig.add_trace(go.Scatter(
-                x=trend_df["period"], y=trend_df["gross_profit"],
-                mode="lines",
+                x=trend_df["display_period"], y=trend_df["gross_profit"],
+                mode="lines+markers",
                 name="Gross Profit",
-                line=dict(color=COLORS["success"], width=2, dash="dot"),
+                line=dict(color=COLORS["success"], width=2.5, dash="dot"),
+                marker=dict(size=6, color=COLORS["success"]),
                 hovertemplate="<b>%{x}</b><br>Profit: ₹%{y:,.0f}<extra></extra>",
             ))
-            chart_layout(fig, height=300)
+            fig.update_xaxes(type="category")
+            chart_layout(fig, height=310)
             st.plotly_chart(fig, use_container_width=True)
             render_inference_card("overview_trend", "Monthly Revenue & Profit Trajectory")
 
@@ -105,7 +110,7 @@ def render(filters: dict):
                 textfont=dict(size=11),
                 hovertemplate="<b>%{label}</b><br>Orders: %{value}<br>%{percent}<extra></extra>",
             ))
-            chart_layout(fig2, height=300)
+            chart_layout(fig2, height=310)
             st.plotly_chart(fig2, use_container_width=True)
             render_inference_card("overview_status", "Order Fulfillment Health", compact=True)
 
@@ -130,8 +135,9 @@ def render(filters: dict):
             name="Gross Profit", marker_color=COLORS["success"],
             hovertemplate="<b>%{x}</b><br>Profit: ₹%{y:,.0f}<extra></extra>",
         ))
-        fig3.update_layout(barmode="group")
-        chart_layout(fig3, height=320)
+        fig3.update_layout(barmode="group", bargap=0.3)
+        fig3.update_xaxes(type="category")
+        chart_layout(fig3, height=330)
         st.plotly_chart(fig3, use_container_width=True)
         render_inference_card("overview_category", "Category Revenue & Margin Performance")
 

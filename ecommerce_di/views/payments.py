@@ -10,7 +10,7 @@ from analytics.payments import (
     get_refund_analysis, get_refund_trend, get_revenue_leakage_waterfall,
 )
 from views.ui_utils import (
-    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
+    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, format_period_label,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state, render_inference_card,
 )
 
@@ -65,8 +65,9 @@ def render(filters: dict):
                 name="Failed", marker_color=COLORS["danger"],
                 hovertemplate="<b>%{x}</b><br>Failed: %{y}<extra></extra>",
             ))
-            fig.update_layout(barmode="stack")
-            chart_layout(fig, "Payments by Method", height=300)
+            fig.update_layout(barmode="stack", bargap=0.35)
+            fig.update_xaxes(type="category")
+            chart_layout(fig, "Payments by Method", height=310)
             st.plotly_chart(fig, use_container_width=True)
 
         with col_b:
@@ -81,7 +82,9 @@ def render(filters: dict):
                 ),
                 hovertemplate="<b>%{x}</b><br>Failure Rate: %{y:.1f}%<extra></extra>",
             ))
-            chart_layout(fig2, "Failure Rate by Method (%)", height=300)
+            fig2.update_layout(bargap=0.35)
+            fig2.update_xaxes(type="category")
+            chart_layout(fig2, "Failure Rate by Method (%)", height=310)
             st.plotly_chart(fig2, use_container_width=True)
 
         # Transaction fees table
@@ -131,25 +134,31 @@ def render(filters: dict):
         if trend_df.empty:
             empty_state("No refund trend data.")
         else:
+            trend_df = trend_df.copy()
+            trend_df["display_period"] = trend_df["period"].apply(lambda p: format_period_label(p, "monthly"))
+
             fig4 = go.Figure()
             fig4.add_trace(go.Bar(
-                x=trend_df["period"], y=trend_df["refund_amount"],
-                marker_color="rgba(239,68,68,0.6)",
-                name="Refund Amount",
+                x=trend_df["display_period"], y=trend_df["refund_amount"],
+                marker_color="rgba(239,68,68,0.65)",
+                name="Refund Amount (₹)",
                 hovertemplate="<b>%{x}</b><br>Refund: ₹%{y:,.0f}<extra></extra>",
             ))
             fig4.add_trace(go.Scatter(
-                x=trend_df["period"], y=trend_df["refund_count"],
+                x=trend_df["display_period"], y=trend_df["refund_count"],
                 mode="lines+markers", name="Refund Count",
-                line=dict(color=COLORS["warning"], width=2),
+                line=dict(color=COLORS["warning"], width=2.5),
+                marker=dict(size=6, color=COLORS["warning"]),
                 yaxis="y2",
                 hovertemplate="Count: %{y}<extra></extra>",
             ))
             fig4.update_layout(
+                bargap=0.35,
                 yaxis2=dict(overlaying="y", side="right",
                             showgrid=False, tickfont=dict(size=10)),
             )
-            chart_layout(fig4, height=300)
+            fig4.update_xaxes(type="category")
+            chart_layout(fig4, height=310)
             st.plotly_chart(fig4, use_container_width=True)
 
     render_inference_card("payments_refunds", "Category Refund Drain & Monthly Trajectory")

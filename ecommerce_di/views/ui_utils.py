@@ -59,6 +59,30 @@ def chart_layout(fig: go.Figure, title: str = "", height: int = 380) -> go.Figur
     return fig
 
 
+def format_period_label(val: str, granularity: str = "monthly") -> str:
+    """Format period strings like '2023-01' into clean display labels like 'Jan 2023'."""
+    try:
+        val_str = str(val).strip()
+        if "-Q" in val_str or granularity == "quarterly":
+            parts = val_str.split("-Q")
+            return f"Q{parts[1]} '{parts[0][-2:]}"
+        elif "-W" in val_str or granularity == "weekly":
+            parts = val_str.split("-W")
+            return f"W{parts[1]} '{parts[0][-2:]}"
+        elif granularity == "monthly" or ("-" in val_str and len(val_str) == 7 and val_str[:4].isdigit()):
+            parts = val_str.split("-")
+            y, m = parts[0], parts[1]
+            month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            m_idx = int(m) - 1
+            if 0 <= m_idx < 12:
+                return f"{month_names[m_idx]} '{y[-2:]}"
+        elif len(val_str) == 4 and val_str.isdigit():
+            return val_str
+    except Exception:
+        pass
+    return str(val)
+
+
 # ── Number formatting ─────────────────────────────────────────────────────────
 
 def fmt_currency(val: float, symbol: str = "₹") -> str:

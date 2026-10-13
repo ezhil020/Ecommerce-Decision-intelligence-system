@@ -10,7 +10,7 @@ from forecasting.forecasting import forecast_revenue, forecast_orders
 from analytics.sales import get_sales_trend
 from config.settings import FORECAST_PERIODS
 from views.ui_utils import (
-    section_header, fmt_currency, fmt_number,
+    section_header, fmt_currency, fmt_number, format_period_label,
     chart_layout, COLORS, empty_state, alert_banner, render_inference_card,
 )
 
@@ -62,38 +62,45 @@ def render(filters: dict):
 
             fcast_val = "forecast"
 
+            # Format display periods for clear sequential layout across the entire container
+            hist_df = hist_df.copy()
+            fcast_df = fcast_df.copy()
+            hist_df["display_period"] = hist_df["period"].apply(lambda p: format_period_label(p, "monthly"))
+            fcast_df["display_period"] = fcast_df["period"].apply(lambda p: format_period_label(p, "monthly"))
+
             fig = go.Figure()
 
             # Historical line
             fig.add_trace(go.Scatter(
-                x=hist_df["period"], y=hist_df[val_col],
-                mode="lines+markers", name="Historical",
-                line=dict(color=COLORS["primary"], width=2.5),
-                marker=dict(size=5),
-                hovertemplate="<b>%{x}</b><br>Actual: %{y:,.0f}<extra></extra>",
+                x=hist_df["display_period"], y=hist_df[val_col],
+                mode="lines+markers", name="Historical Actuals",
+                line=dict(color=COLORS["primary"], width=2.8),
+                marker=dict(size=6, color=COLORS["primary"]),
+                hovertemplate="<b>%{x}</b><br>Actual: ₹%{y:,.0f}<extra></extra>",
             ))
 
             # Confidence interval
             if "upper" in fcast_df.columns and "lower" in fcast_df.columns:
                 fig.add_trace(go.Scatter(
-                    x=list(fcast_df["period"]) + list(fcast_df["period"][::-1]),
+                    x=list(fcast_df["display_period"]) + list(fcast_df["display_period"][::-1]),
                     y=list(fcast_df["upper"]) + list(fcast_df["lower"][::-1]),
                     fill="toself",
                     fillcolor="rgba(139,92,246,0.12)",
                     line=dict(color="rgba(0,0,0,0)"),
-                    name="95% CI",
+                    name="95% Confidence Interval",
                     hoverinfo="skip",
                 ))
 
             # Forecast line
             fig.add_trace(go.Scatter(
-                x=fcast_df["period"], y=fcast_df[fcast_val],
-                mode="lines+markers", name="Forecast (estimate)",
-                line=dict(color=COLORS["secondary"], width=2.5, dash="dash"),
-                marker=dict(size=6, symbol="diamond"),
-                hovertemplate="<b>%{x}</b><br>Forecast: %{y:,.0f}<extra></extra>",
+                x=fcast_df["display_period"], y=fcast_df[fcast_val],
+                mode="lines+markers", name="Projected Forecast",
+                line=dict(color=COLORS["secondary"], width=2.8, dash="dash"),
+                marker=dict(size=7, symbol="diamond", color=COLORS["secondary"]),
+                hovertemplate="<b>%{x}</b><br>Forecast: ₹%{y:,.0f}<extra></extra>",
             ))
 
+            fig.update_xaxes(type="category")
             chart_layout(fig, f"{metric} Forecast — Next {periods} Months", height=420)
             st.plotly_chart(fig, use_container_width=True)
 
@@ -177,6 +184,7 @@ def render(filters: dict):
                         customdata=drop_df["magnitude"],
                     ))
 
+                fig2.update_xaxes(type="category")
                 chart_layout(fig2, height=280)
                 st.plotly_chart(fig2, use_container_width=True)
 

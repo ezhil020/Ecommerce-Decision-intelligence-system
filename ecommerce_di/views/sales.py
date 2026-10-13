@@ -11,7 +11,7 @@ from analytics.sales import (
     get_executive_kpis,
 )
 from views.ui_utils import (
-    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
+    kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, format_period_label,
     chart_layout, COLORS, CATEGORY_COLORS, empty_state, alert_banner, render_inference_card,
 )
 
@@ -81,62 +81,72 @@ def render(filters: dict):
         )
     with col2:
         sort_metric = st.selectbox(
-            "Sort products by",
+            "Sort products table by",
             ["revenue", "units_sold", "gross_profit", "orders"],
             key="sales_sort",
         )
 
-    # ── Revenue & Order Trend ─────────────────────────────────────────────────
-    section_header("Sales Trend", f"Aggregated by {granularity}")
+    section_header("Sales Trend", f"Aggregated by {granularity.capitalize()}")
     trend_df = get_sales_trend(granularity, filters)
 
     if trend_df.empty:
         empty_state("No sales data found for the selected filter range. Please clear or expand the date range in Global Filters (dataset covers 2023-01-01 to 2023-12-31).")
     else:
+        # Format periods cleanly for category display across the entire chart width
+        trend_df = trend_df.copy()
+        trend_df["display_period"] = trend_df["period"].apply(lambda p: format_period_label(p, granularity))
+
         tab1, tab2, tab3, tab4 = st.tabs(["Revenue & Discounts", "Orders", "Average Order Value", "Weekly Seasonality"])
 
         with tab1:
             fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=trend_df["display_period"], y=trend_df["total_discount"],
+                name="Promotional Discount", marker_color="rgba(245,158,11,0.45)",
+                hovertemplate="<b>%{x}</b><br>Discount: ₹%{y:,.0f}<extra></extra>",
+                yaxis="y2",
+            ))
             fig.add_trace(go.Scatter(
-                x=trend_df["period"], y=trend_df["revenue"],
-                mode="lines+markers", name="Revenue",
-                line=dict(color=COLORS["primary"], width=2.5),
+                x=trend_df["display_period"], y=trend_df["revenue"],
+                mode="lines+markers", name="Net Realized Revenue",
+                line=dict(color=COLORS["primary"], width=3),
+                marker=dict(size=7, color=COLORS["primary"]),
                 fill="tozeroy", fillcolor="rgba(99,102,241,0.08)",
                 hovertemplate="<b>%{x}</b><br>Revenue: ₹%{y:,.0f}<extra></extra>",
             ))
-            fig.add_trace(go.Bar(
-                x=trend_df["period"], y=trend_df["total_discount"],
-                name="Discount", marker_color="rgba(245,158,11,0.4)",
-                hovertemplate="Discount: ₹%{y:,.0f}<extra></extra>",
-                yaxis="y2",
-            ))
             fig.update_layout(
+                bargap=0.35,
                 yaxis2=dict(overlaying="y", side="right",
                             showgrid=False, tickfont=dict(size=10),
                             tickcolor=COLORS["warning"]),
             )
-            chart_layout(fig, height=340)
+            fig.update_xaxes(type="category")
+            chart_layout(fig, height=350)
             st.plotly_chart(fig, use_container_width=True)
             render_inference_card("sales_trend_revenue", "Revenue & Discount Dynamics")
 
         with tab2:
             fig2 = go.Figure(go.Bar(
-                x=trend_df["period"], y=trend_df["orders"],
+                x=trend_df["display_period"], y=trend_df["orders"],
                 marker_color=COLORS["info"],
-                hovertemplate="<b>%{x}</b><br>Orders: %{y}<extra></extra>",
+                hovertemplate="<b>%{x}</b><br>Orders: %{y:,}<extra></extra>",
             ))
-            chart_layout(fig2, height=300)
+            fig2.update_layout(bargap=0.35)
+            fig2.update_xaxes(type="category")
+            chart_layout(fig2, height=310)
             st.plotly_chart(fig2, use_container_width=True)
             render_inference_card("sales_trend_orders", "Order Volume Distribution")
 
         with tab3:
             fig3 = go.Figure(go.Scatter(
-                x=trend_df["period"], y=trend_df["avg_order_value"],
-                mode="lines+markers", line=dict(color=COLORS["success"], width=2.5),
+                x=trend_df["display_period"], y=trend_df["avg_order_value"],
+                mode="lines+markers", line=dict(color=COLORS["success"], width=3),
+                marker=dict(size=7, color=COLORS["success"]),
                 fill="tozeroy", fillcolor="rgba(16,185,129,0.08)",
-                hovertemplate="AOV: ₹%{y:,.0f}<extra></extra>",
+                hovertemplate="<b>%{x}</b><br>AOV: ₹%{y:,.0f}<extra></extra>",
             ))
-            chart_layout(fig3, height=300)
+            fig3.update_xaxes(type="category")
+            chart_layout(fig3, height=310)
             st.plotly_chart(fig3, use_container_width=True)
             render_inference_card("sales_trend_aov", "Average Order Value Dynamics")
 
@@ -148,9 +158,11 @@ def render(filters: dict):
                     fig_dow1 = go.Figure(go.Bar(
                         x=dow_df["day_of_week"], y=dow_df["orders"],
                         marker=dict(color=COLORS["primary"]),
-                        hovertemplate="<b>%{x}</b><br>Orders: %{y}<extra></extra>",
+                        hovertemplate="<b>%{x}</b><br>Orders: %{y:,}<extra></extra>",
                     ))
-                    chart_layout(fig_dow1, "Orders by Day of Week", height=280)
+                    fig_dow1.update_xaxes(type="category")
+                    fig_dow1.update_layout(bargap=0.3)
+                    chart_layout(fig_dow1, "Orders by Day of Week", height=290)
                     st.plotly_chart(fig_dow1, use_container_width=True)
                 with col_d2:
                     fig_dow2 = go.Figure(go.Bar(
@@ -158,7 +170,9 @@ def render(filters: dict):
                         marker=dict(color=COLORS["success"]),
                         hovertemplate="<b>%{x}</b><br>AOV: ₹%{y:,.0f}<extra></extra>",
                     ))
-                    chart_layout(fig_dow2, "Average Order Value by Day", height=280)
+                    fig_dow2.update_xaxes(type="category")
+                    fig_dow2.update_layout(bargap=0.3)
+                    chart_layout(fig_dow2, "Average Order Value by Day", height=290)
                     st.plotly_chart(fig_dow2, use_container_width=True)
             render_inference_card("sales_dow", "Day-of-Week Seasonality")
 
@@ -168,25 +182,40 @@ def render(filters: dict):
     col_a, col_b = st.columns(2)
 
     with col_a:
-        section_header("Category Breakdown")
+        section_header("Category Performance Breakdown")
         cat_df = get_category_performance(filters)
         if cat_df.empty:
             empty_state("No data.")
         else:
-            top_cat = cat_df.groupby("category").agg(
-                revenue=("revenue","sum"),
-                gross_profit=("gross_profit","sum"),
-            ).reset_index().sort_values("revenue", ascending=True)
+            cat_level = st.radio("Display Level", ["Main Categories", "All Sub-Categories"], horizontal=True, key="sales_cat_lvl")
+            if cat_level == "Main Categories":
+                agg_cat = cat_df.groupby("category").agg(
+                    revenue=("revenue", "sum"),
+                    gross_profit=("gross_profit", "sum"),
+                ).reset_index().sort_values("revenue", ascending=True)
+                y_col = "category"
+            else:
+                agg_cat = cat_df.groupby("sub_category").agg(
+                    revenue=("revenue", "sum"),
+                    gross_profit=("gross_profit", "sum"),
+                ).reset_index().sort_values("revenue", ascending=True)
+                y_col = "sub_category"
 
             fig4 = go.Figure()
-            fig4.add_trace(go.Bar(y=top_cat["category"], x=top_cat["revenue"],
-                                   orientation="h", name="Revenue",
-                                   marker_color=COLORS["primary"]))
-            fig4.add_trace(go.Bar(y=top_cat["category"], x=top_cat["gross_profit"],
-                                   orientation="h", name="Gross Profit",
-                                   marker_color=COLORS["success"]))
-            fig4.update_layout(barmode="overlay", bargap=0.3)
-            chart_layout(fig4, height=320)
+            fig4.add_trace(go.Bar(
+                y=agg_cat[y_col], x=agg_cat["revenue"],
+                orientation="h", name="Revenue",
+                marker_color=COLORS["primary"],
+                hovertemplate="<b>%{y}</b><br>Revenue: ₹%{x:,.0f}<extra></extra>",
+            ))
+            fig4.add_trace(go.Bar(
+                y=agg_cat[y_col], x=agg_cat["gross_profit"],
+                orientation="h", name="Gross Profit",
+                marker_color=COLORS["success"],
+                hovertemplate="<b>%{y}</b><br>Profit: ₹%{x:,.0f}<extra></extra>",
+            ))
+            fig4.update_layout(barmode="group", bargap=0.25)
+            chart_layout(fig4, height=350 if cat_level == "Main Categories" else 480)
             st.plotly_chart(fig4, use_container_width=True)
 
     with col_b:
@@ -195,7 +224,7 @@ def render(filters: dict):
         if brand_df.empty:
             empty_state("No data.")
         else:
-            top_brands = brand_df.head(12)
+            top_brands = brand_df.head(15)
             fig5 = go.Figure(go.Bar(
                 x=top_brands["revenue"], y=top_brands["brand"],
                 orientation="h",
@@ -204,12 +233,11 @@ def render(filters: dict):
                             showscale=False),
                 hovertemplate="<b>%{y}</b><br>Revenue: ₹%{x:,.0f}<extra></extra>",
             ))
-            fig5.update_layout(yaxis=dict(autorange="reversed"))
-            chart_layout(fig5, height=320)
+            fig5.update_layout(yaxis=dict(autorange="reversed"), bargap=0.25)
+            chart_layout(fig5, height=390)
             st.plotly_chart(fig5, use_container_width=True)
 
     render_inference_card("sales_category_brand", "Category & Brand Concentration")
-
 
     st.markdown("---")
 
