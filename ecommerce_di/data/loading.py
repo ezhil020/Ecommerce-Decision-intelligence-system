@@ -19,11 +19,12 @@ from database.connection import get_connection, create_schema, db_cursor
 logger = logging.getLogger(__name__)
 
 
-def load_all(progress_callback=None, refresh_inferences: bool = False) -> dict:
+def load_all(progress_callback=None, refresh_inferences: bool = True, **kwargs) -> dict:
     """
     Full ETL pipeline. Returns a summary dict with row counts and issues.
     progress_callback(step: str, pct: int) → called to update a progress bar.
-    refresh_inferences: If True, regenerates inferences; otherwise deferred until user clicks Re-sync.
+    refresh_inferences: bool (default True). If False, skips AI inference re-generation.
+    **kwargs: Absorbs any unexpected keyword arguments safely.
     """
     summary = {
         "run_time": datetime.now().isoformat(),

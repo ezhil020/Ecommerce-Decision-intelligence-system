@@ -12,9 +12,46 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import streamlit as st
+import importlib
 from database.connection import db_exists, get_connection
+import data.loading
+try:
+    importlib.reload(data.loading)
+except Exception:
+    pass
 from data.loading import load_all
 from config.settings import APP_TITLE, APP_ICON
+
+
+def execute_load_all(progress_callback=None, refresh_inferences: bool = False) -> dict:
+    """
+    Safely executes ETL load_all, forcing module refresh and absorbing any keyword discrepancies.
+    Guarantees no unexpected keyword argument crashes regardless of Streamlit in-memory module state.
+    """
+    import importlib
+    import data.loading
+    try:
+        importlib.reload(data.loading)
+    except Exception:
+        pass
+
+    fn = getattr(data.loading, "load_all", None)
+    if fn is None:
+        raise RuntimeError("data.loading.load_all function not found")
+
+    try:
+        return fn(progress_callback=progress_callback, refresh_inferences=refresh_inferences)
+    except TypeError:
+        # Fallback if legacy in-memory signature only accepts progress_callback
+        summary = fn(progress_callback=progress_callback)
+        if refresh_inferences:
+            try:
+                from analytics.inferences import refresh_all_chart_inferences
+                refresh_all_chart_inferences()
+            except Exception:
+                pass
+        return summary
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -287,7 +324,7 @@ def _data_management_page():
                                   unsafe_allow_html=True)
 
         try:
-            summary = load_all(progress_callback=_cb)
+            summary = execute_load_all(progress_callback=_cb, refresh_inferences=True)
             progress_bar.progress(1.0, text="Complete!")
             status_text.empty()
 
@@ -349,6 +386,7 @@ def _data_management_page():
 
         # Fetch product and customer lists if DB exists
         prod_options = {}
+        cust_options = {}
         if db_exists():
             prods_df = query_df("SELECT product_id, product_name, category, selling_price FROM dim_product ORDER BY product_name LIMIT 100")
             for _, r in prods_df.iterrows():
@@ -359,6 +397,78 @@ def _data_management_page():
                     "unit_price": float(r["selling_price"] or 0),
                 }
 
+            custs_df = query_df("SELECT customer_id, name, city FROM dim_customer ORDER BY customer_id LIMIT 100")
+            for _, r in custs_df.iterrows():
+                cust_label = f"{r['customer_id']} — {r['name']} ({r['city']})"
+                cust_options[cust_label] = r["customer_id"]
+
+        # ── 1-Click Fast Injection (Instant Testing) ──────────────────────────
+        st.markdown("#### ⚡ 1-Click Fast Injection (Instant Verification)")
+        c_quick_t1, c_quick_t2 = st.columns([1, 2])
+        with c_quick_t1:
+            if st.button("🚀 1-Click Inject Sample Test Order", use_container_width=True):
+                try:
+                    import time
+                    t_now = int(time.time())
+                    test_ord_id = f"ORD-LIVE-{t_now}"
+                    test_pay_id = f"PAY-LIVE-{t_now}"
+
+                    orders_path = files["Orders.csv"]
+                    existing_orders = pd.read_csv(orders_path, dtype=str) if orders_path.exists() else pd.DataFrame()
+                    sample_prod = list(prod_options.values())[0] if prod_options else {"product_id": "PD-001", "product_name": "Standard Item", "unit_price": 2500.0}
+                    sample_cust_id = list(cust_options.values())[0] if cust_options else "0000-01"
+
+                    new_order_data = {
+                        "order_id": test_ord_id,
+                        "order_date": str(date.today()),
+                        "customer_id": sample_cust_id,
+                        "product_id": sample_prod["product_id"],
+                        "product_name": sample_prod["product_name"],
+                        "quantity": "2",
+                        "unit_price": str(sample_prod["unit_price"]),
+                        "discount_amount": "100.0",
+                        "tax_amount": str(round((sample_prod["unit_price"] * 2 - 100) * 0.05, 2)),
+                        "shipping_charge": "0",
+                        "payment_mode": "UPI",
+                        "order_status": "Delivered",
+                        "total_amount": str(round(sample_prod["unit_price"] * 2 - 100, 2)),
+                    }
+                    order_row_mapped = {}
+                    for col in existing_orders.columns:
+                        norm = col.strip().lower().replace(" (nos.)", "").replace(" ", "_")
+                        order_row_mapped[col] = new_order_data.get(norm, "")
+                    pd.concat([existing_orders, pd.DataFrame([order_row_mapped])], ignore_index=True).to_csv(orders_path, index=False)
+
+                    payments_path = files["Payments.csv"]
+                    existing_payments = pd.read_csv(payments_path, dtype=str) if payments_path.exists() else pd.DataFrame()
+                    new_pay_data = {
+                        "payment_id": test_pay_id,
+                        "order_id": test_ord_id,
+                        "payment_date": str(date.today()),
+                        "payment_mode": "UPI",
+                        "payment_status": "Success",
+                        "transaction_fee": "25.0",
+                        "refund_amount": "0",
+                        "refund_date": "",
+                    }
+                    pay_row_mapped = {}
+                    for col in existing_payments.columns:
+                        norm = col.strip().lower().replace(" ", "_")
+                        pay_row_mapped[col] = new_pay_data.get(norm, "")
+                    pd.concat([existing_payments, pd.DataFrame([pay_row_mapped])], ignore_index=True).to_csv(payments_path, index=False)
+
+                    with st.spinner("Injecting test record and updating warehouse…"):
+                        summary = execute_load_all(refresh_inferences=False)
+                        st.success(f"✅ Injected test order {test_ord_id}! Warehouse updated to {summary['rows_loaded'].get('orders', 0):,} orders. Dashboard charts refreshed!")
+                        st.rerun()
+                except Exception as ex:
+                    st.error(f"Error injecting test order: {ex}")
+                    logger.exception("Error in 1-click injection")
+        with c_quick_t2:
+            st.caption("Appends a verified transaction to Orders.csv & Payments.csv, rebuilds database warehouse tables, and updates all analytics charts without running slow AI models.")
+
+        st.markdown("---")
+        st.markdown("#### 📝 Custom Transaction Entry Form")
         with st.form("manual_order_form", clear_on_submit=False):
             f_col1, f_col2 = st.columns(2)
             with f_col1:
@@ -367,7 +477,11 @@ def _data_management_page():
                     list(prod_options.keys()) if prod_options else ["Standard Product"],
                     key="form_sel_product"
                 )
-                cust_id_input = st.text_input("Customer ID", value="CUST-0001", key="form_cust_id")
+                if cust_options:
+                    sel_cust_label = st.selectbox("Customer", list(cust_options.keys()), key="form_sel_cust")
+                    cust_id_input = cust_options[sel_cust_label]
+                else:
+                    cust_id_input = st.text_input("Customer ID", value="0000-01", key="form_cust_id")
                 order_date_input = st.date_input("Order Date", value=date.today(), key="form_order_date")
                 payment_mode_input = st.selectbox(
                     "Payment Mode",
@@ -446,10 +560,9 @@ def _data_management_page():
                 updated_payments = pd.concat([existing_payments, pd.DataFrame([pay_row_mapped])], ignore_index=True)
                 updated_payments.to_csv(payments_path, index=False)
 
-
-                # 3. Rebuild star schema warehouse (pure data injection, inferences refreshed manually when desired)
+                # 3. Rebuild star schema warehouse (pure data injection; AI inferences refreshed on demand in Tab 3)
                 with st.spinner("Rebuilding warehouse and updating all dashboard charts & metrics…"):
-                    summary = load_all(refresh_inferences=False)
+                    summary = execute_load_all(refresh_inferences=False)
                     st.success(
                         f"✅ **New Transaction {new_order_id} recorded successfully!** "
                         f"Warehouse updated to {summary['rows_loaded'].get('orders', 0):,} orders. "
@@ -496,10 +609,10 @@ def _data_management_page():
                         existing_df = pd.read_csv(target_path, dtype=str)
                         combined_df = pd.concat([existing_df, new_df], ignore_index=True)
                         pk_col = {
-                            "Orders.csv": "Order_ID",
-                            "Customers.csv": "Customer_ID",
-                            "Products.csv": "Product_ID",
-                            "Payments.csv": "Payment_ID",
+                            "Orders.csv": "order_id",
+                            "Customers.csv": "customer_id",
+                            "Products.csv": "product_id",
+                            "Payments.csv": "payment_id",
                         }.get(target_file_name)
                         if pk_col and pk_col in combined_df.columns:
                             combined_df = combined_df.drop_duplicates(subset=[pk_col], keep="last")
@@ -509,9 +622,9 @@ def _data_management_page():
                         new_df.to_csv(target_path, index=False)
                         st.success(f"Replaced {target_file_name} with {len(new_df):,} rows.")
 
-                    # Trigger ETL (pure data injection, inferences refreshed manually when desired)
+                    # Trigger ETL (pure data injection; AI inferences refreshed on demand in Tab 3)
                     with st.spinner("Rebuilding Star Schema & updating all dashboard charts & metrics…"):
-                        summary = load_all(refresh_inferences=False)
+                        summary = execute_load_all(refresh_inferences=False)
                         st.success("✅ Warehouse successfully updated! All dashboards and charts are now updated.")
                         st.rerun()
 
@@ -566,7 +679,6 @@ def _data_management_page():
                 import pandas as pd
 
                 batch_ts = int(time.time())
-                # Generate unique order IDs per batch so each click adds brand-new orders
                 dynamic_orders_csv = (
                     "Order_ID,Order_Date,Customer_ID,Product_ID,Product_Name,Quantity (nos.),Unit_Price,Discount_Amount,Tax_Amount,Shipping_Charge,Payment_Mode,Order_Status,Total_Amount\n"
                     f"ORD-TEST-{batch_ts}-1,2023-12-15,0000-01,PD-001,Niviea Fitness Model 1,3,18044,1500,2500,50,UPI,Delivered,55132\n"
@@ -596,8 +708,7 @@ def _data_management_page():
                 comb_pay.to_csv(pay_path, index=False)
 
                 with st.spinner("Injecting data into CSVs and updating warehouse schema…"):
-                    # Fast pure data injection: refresh_inferences=False
-                    summary = load_all(refresh_inferences=False)
+                    summary = execute_load_all(refresh_inferences=False)
                     st.success(
                         f"✅ **Data Injected Successfully!** 3 new orders and payments added. "
                         f"Warehouse now has **{summary['rows_loaded']['orders']:,}** orders. "
@@ -606,6 +717,7 @@ def _data_management_page():
                     st.rerun()
             except Exception as e:
                 st.error(f"Error during 1-click test injection: {e}")
+
 
     # ─────────────── TAB 3: INFERENCES STUDIO ──────────────────────────────────
     with tab_inf:
