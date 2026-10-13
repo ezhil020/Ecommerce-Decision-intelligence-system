@@ -12,14 +12,14 @@ from analytics.inventory import (
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number,
-    chart_layout, COLORS, CATEGORY_COLORS, empty_state,
+    chart_layout, COLORS, CATEGORY_COLORS, empty_state, render_inference_card,
 )
 
 
 def render(filters: dict):
     st.markdown("## Product & Inventory Intelligence")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Stock levels, product performance and profitability</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Stock levels, product performance and profitability with AI inferences</p>',
         unsafe_allow_html=True,
     )
 
@@ -37,7 +37,10 @@ def render(filters: dict):
         with col:
             kpi_card(title, val, icon=icon, accent=accent)
 
+    render_inference_card("products_kpis", "Catalog Inventory Valuation")
+
     st.markdown("---")
+
 
     # ── Inventory Risk ─────────────────────────────────────────────────────────
     section_header("⚠️ Stock Risk — Below Reorder Level",
@@ -77,6 +80,8 @@ def render(filters: dict):
             chart_layout(fig, "Stock Deficit (Top 10)", height=320)
             st.plotly_chart(fig, use_container_width=True)
 
+        render_inference_card("products_deficit", "Top Stock Deficit Bottlenecks")
+
     st.markdown("---")
 
     # ── High Demand / Low Stock ────────────────────────────────────────────────
@@ -115,6 +120,8 @@ def render(filters: dict):
                 }),
                 use_container_width=True, hide_index=True, height=260,
             )
+
+    render_inference_card("products_high_demand_low_stock", "Stockout Risk Runway & Working Capital Exposure")
 
     st.markdown("---")
 
@@ -209,3 +216,6 @@ def render(filters: dict):
                 use_container_width=True,
                 hide_index=True,
             )
+
+        render_inference_card("products_rating_quality", "Product Satisfaction vs Sales & Returns")
+

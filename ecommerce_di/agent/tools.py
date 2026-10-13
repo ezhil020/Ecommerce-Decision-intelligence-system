@@ -209,6 +209,32 @@ def tool_compare_periods(period1_start: str, period1_end: str,
         return json.dumps({"error": str(e)})
 
 
+def tool_execute_sql(query: str) -> str:
+    """
+    Execute any arbitrary read-only analytical SQL query on SQLite.
+    Allows answering any ad-hoc question across all tables.
+    """
+    clean_q = query.strip().rstrip(";")
+    upper_q = clean_q.upper()
+    if not upper_q.startswith("SELECT") and not upper_q.startswith("WITH"):
+        return json.dumps({"error": "Security restriction: Only read-only SELECT queries are permitted."})
+
+    # Forbid dangerous statements
+    for forbid in ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "ATTACH", "DETACH"]:
+        if f" {forbid} " in f" {upper_q} ":
+            return json.dumps({"error": f"Security restriction: Statement '{forbid}' is not permitted."})
+
+    if "LIMIT" not in upper_q:
+        clean_q += " LIMIT 25"
+
+    try:
+        from database.connection import query_df
+        df = query_df(clean_q)
+        return _df_to_json(df, max_rows=25)
+    except Exception as e:
+        return json.dumps({"error": f"SQL execution failed: {str(e)}", "query_attempted": clean_q})
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Tool registry (function calling mapping)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -230,7 +256,9 @@ TOOL_FUNCTIONS: dict[str, callable] = {
     "get_anomalies":              tool_get_anomalies,
     "get_forecast":               tool_get_forecast,
     "compare_periods":            tool_compare_periods,
+    "execute_sql":                tool_execute_sql,
 }
+
 
 
 GEMINI_TOOLS = [
@@ -369,6 +397,17 @@ GEMINI_TOOLS = [
                         "period1_end":   {"type": "string"},
                         "period2_start": {"type": "string"},
                         "period2_end":   {"type": "string"},
+                    },
+                },
+            },
+            {
+                "name": "execute_sql",
+                "description": "Execute any ad-hoc analytical read-only SQL query on the SQLite warehouse. Tables: dim_customer(customer_id, name, gender, age, city, state, country, registration_date, membership_label, loyalty_points, preferred_device), dim_product(product_id, product_name, category, sub_category, brand, sku, cost_price, selling_price, profit_margin, stock_quantity, reorder_level, product_rating), fact_orders(order_id, order_date, customer_id, product_id, product_name, quantity, unit_price, discount_amount, tax_amount, shipping_charge, payment_mode, order_status, total_amount, gross_profit), fact_payments(payment_id, order_id, payment_date, payment_mode, payment_status, transaction_fee, refund_amount, refund_date), dim_date(date_id, full_date, year, quarter, month, month_name, week, day, day_of_week).",
+                "parameters": {
+                    "type": "object",
+                    "required": ["query"],
+                    "properties": {
+                        "query": {"type": "string", "description": "The read-only SELECT SQL query to execute."},
                     },
                 },
             },

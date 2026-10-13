@@ -110,13 +110,17 @@ def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
         .str.replace(r"[^a-z0-9]+", "_", regex=True)
         .str.strip("_")
     )
+    # Deduplicate columns if any duplicates were created by normalization
+    df = df.loc[:, ~df.columns.duplicated(keep="last")]
     return df
 
 
 def strip_text_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Strip leading/trailing whitespace from all string columns."""
+    df = df.loc[:, ~df.columns.duplicated(keep="last")]
     for col in df.select_dtypes(include="object").columns:
-        df[col] = df[col].str.strip()
+        if isinstance(df[col], pd.Series):
+            df[col] = df[col].str.strip()
     return df
 
 

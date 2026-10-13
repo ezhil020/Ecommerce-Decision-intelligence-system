@@ -125,19 +125,9 @@ def _run_investigation(query: str):
 def _render_entry(entry: dict):
     """Render a single Q&A pair from chat history."""
     # User question
-    st.markdown(f"""
-    <div style="
-        background: rgba(99,102,241,0.12);
-        border-left: 3px solid {COLORS['primary']};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin: 16px 0 8px;
-        color: #e2e8f0;
-        font-size: 0.92rem;
-    ">
-        <strong>You:</strong> {entry['query']}
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"""<div style="background:rgba(99,102,241,0.12);border-left:3px solid {COLORS['primary']};border-radius:8px;padding:12px 16px;margin:16px 0 8px;color:#e2e8f0;font-size:0.92rem;">
+<strong>You:</strong> {entry['query']}
+</div>""", unsafe_allow_html=True)
 
     # Tools used
     if entry.get("tools_used"):
@@ -158,17 +148,6 @@ def _render_entry(entry: dict):
     if entry.get("error"):
         st.error(entry["error"])
     else:
-        st.markdown("""
-        <div style="
-            background: rgba(15,23,42,0.85);
-            border: 1px solid rgba(99,102,241,0.25);
-            border-radius: 10px;
-            padding: 18px 22px;
-            margin-bottom: 12px;
-            color: #f1f5f9;
-        ">
-        """, unsafe_allow_html=True)
-
+        st.markdown("""<div style="background:rgba(15,23,42,0.85);border:1px solid rgba(99,102,241,0.25);border-radius:10px;padding:18px 22px;margin-bottom:12px;color:#f1f5f9;">""", unsafe_allow_html=True)
         st.markdown(entry["answer"])
-
         st.markdown("</div>", unsafe_allow_html=True)

@@ -11,14 +11,14 @@ from analytics.sales import (
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct, fmt_pct,
-    chart_layout, COLORS, CATEGORY_COLORS, empty_state, alert_banner,
+    chart_layout, COLORS, CATEGORY_COLORS, empty_state, alert_banner, render_inference_card,
 )
 
 
 def render(filters: dict):
     st.markdown("## Sales Intelligence")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Revenue, order and product performance analysis</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Revenue, order and product performance analysis with AI inferences</p>',
         unsafe_allow_html=True,
     )
 
@@ -69,6 +69,7 @@ def render(filters: dict):
             )
             chart_layout(fig, height=340)
             st.plotly_chart(fig, use_container_width=True)
+            render_inference_card("sales_trend_revenue", "Revenue & Discount Dynamics")
 
         with tab2:
             fig2 = go.Figure(go.Bar(
@@ -78,6 +79,7 @@ def render(filters: dict):
             ))
             chart_layout(fig2, height=300)
             st.plotly_chart(fig2, use_container_width=True)
+            render_inference_card("sales_trend_orders", "Order Volume Distribution")
 
         with tab3:
             fig3 = go.Figure(go.Scatter(
@@ -88,6 +90,7 @@ def render(filters: dict):
             ))
             chart_layout(fig3, height=300)
             st.plotly_chart(fig3, use_container_width=True)
+            render_inference_card("sales_trend_aov", "Average Order Value Dynamics")
 
         with tab4:
             dow_df = get_day_of_week_analysis(filters)
@@ -109,6 +112,7 @@ def render(filters: dict):
                     ))
                     chart_layout(fig_dow2, "Average Order Value by Day", height=280)
                     st.plotly_chart(fig_dow2, use_container_width=True)
+            render_inference_card("sales_dow", "Day-of-Week Seasonality")
 
     st.markdown("---")
 
@@ -155,6 +159,9 @@ def render(filters: dict):
             fig5.update_layout(yaxis=dict(autorange="reversed"))
             chart_layout(fig5, height=320)
             st.plotly_chart(fig5, use_container_width=True)
+
+    render_inference_card("sales_category_brand", "Category & Brand Concentration")
+
 
     st.markdown("---")
 

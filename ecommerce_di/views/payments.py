@@ -11,14 +11,14 @@ from analytics.payments import (
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
-    chart_layout, COLORS, CATEGORY_COLORS, empty_state,
+    chart_layout, COLORS, CATEGORY_COLORS, empty_state, render_inference_card,
 )
 
 
 def render(filters: dict):
     st.markdown("## Payments & Operations")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Payment success, failure, refunds and operational status</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Payment success, failure, refunds and operational status with AI inferences</p>',
         unsafe_allow_html=True,
     )
 
@@ -38,7 +38,10 @@ def render(filters: dict):
         with col:
             kpi_card(title, val, icon=icon, accent=accent)
 
+    render_inference_card("payments_kpis", "Payment Gateway Health & Success Ratio")
+
     st.markdown("---")
+
 
     # ── Payment Method Analysis ────────────────────────────────────────────────
     section_header("Payment Method Performance",
@@ -96,6 +99,8 @@ def render(filters: dict):
             use_container_width=True, hide_index=True,
         )
 
+        render_inference_card("payments_methods", "Payment Method Success vs Dropouts")
+
     st.markdown("---")
 
     # ── Refund Analysis ────────────────────────────────────────────────────────
@@ -147,6 +152,8 @@ def render(filters: dict):
             chart_layout(fig4, height=300)
             st.plotly_chart(fig4, use_container_width=True)
 
+    render_inference_card("payments_refunds", "Category Refund Drain & Monthly Trajectory")
+
     st.markdown("---")
 
     # ── Revenue Leakage & Cash Flow Waterfall ───────────────────────────────────
@@ -195,11 +202,12 @@ def render(filters: dict):
                 icon="🏦",
                 accent=COLORS["success"] if realization_pct > 65 else COLORS["warning"],
             )
-            st.markdown(f"""
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;margin-top:10px;font-size:0.83rem;color:#cbd5e1;line-height:1.6">
-                <div>🏷️ <b>Discount Erosion:</b> {fmt_currency(disc)} ({(disc/gmv*100):.1f}%)</div>
-                <div>❌ <b>Cancellation Loss:</b> {fmt_currency(canc)} ({(canc/gmv*100):.1f}%)</div>
-                <div>↩️ <b>Return Loss:</b> {fmt_currency(ret)} ({(ret/gmv*100):.1f}%)</div>
-                <div>💳 <b>Gateway Fees:</b> {fmt_currency(fee)} ({(fee/gmv*100):.2f}%)</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;margin-top:10px;font-size:0.83rem;color:#cbd5e1;line-height:1.6">
+<div>🏷️ <b>Discount Erosion:</b> {fmt_currency(disc)} ({(disc/gmv*100):.1f}%)</div>
+<div>❌ <b>Cancellation Loss:</b> {fmt_currency(canc)} ({(canc/gmv*100):.1f}%)</div>
+<div>↩️ <b>Return Loss:</b> {fmt_currency(ret)} ({(ret/gmv*100):.1f}%)</div>
+<div>💳 <b>Gateway Fees:</b> {fmt_currency(fee)} ({(fee/gmv*100):.2f}%)</div>
+</div>""", unsafe_allow_html=True)
+
+        render_inference_card("payments_waterfall", "Cash Flow & Net Realization Bridge")
+

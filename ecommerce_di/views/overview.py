@@ -11,14 +11,14 @@ from analytics.inventory import get_inventory_risk
 from analytics.payments import get_order_status_breakdown
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number, fmt_pct,
-    chart_layout, COLORS, CATEGORY_COLORS, empty_state,
+    chart_layout, COLORS, CATEGORY_COLORS, empty_state, render_inference_card,
 )
 
 
 def render(filters: dict):
     st.markdown("## Executive Overview")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">High-level business performance at a glance</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">High-level business performance at a glance with persistent AI inferences</p>',
         unsafe_allow_html=True,
     )
 
@@ -54,6 +54,9 @@ def render(filters: dict):
         with col:
             kpi_card(title, val, subtitle=sub, icon=icon, accent=accent)
 
+    # Executive KPI Inference Card
+    render_inference_card("overview_kpis", "Executive Performance Benchmark", summary_data=kpis)
+
     st.markdown("---")
 
     # ── Sales Trend ────────────────────────────────────────────────────────────
@@ -85,6 +88,7 @@ def render(filters: dict):
             ))
             chart_layout(fig, height=300)
             st.plotly_chart(fig, use_container_width=True)
+            render_inference_card("overview_trend", "Monthly Revenue & Profit Trajectory")
 
     with col_r:
         section_header("Order Status", "Breakdown by status")
@@ -103,6 +107,7 @@ def render(filters: dict):
             ))
             chart_layout(fig2, height=300)
             st.plotly_chart(fig2, use_container_width=True)
+            render_inference_card("overview_status", "Order Fulfillment Health", compact=True)
 
     # ── Category Performance ───────────────────────────────────────────────────
     section_header("Category Performance", "Revenue and profit by category")
@@ -128,6 +133,7 @@ def render(filters: dict):
         fig3.update_layout(barmode="group")
         chart_layout(fig3, height=320)
         st.plotly_chart(fig3, use_container_width=True)
+        render_inference_card("overview_category", "Category Revenue & Margin Performance")
 
     # ── Inventory Alerts ───────────────────────────────────────────────────────
     inv_df = get_inventory_risk()
@@ -139,3 +145,5 @@ def render(filters: dict):
             use_container_width=True,
             hide_index=True,
         )
+        render_inference_card("overview_inventory", "Safety Stock Deficits & Stockout Risk")
+

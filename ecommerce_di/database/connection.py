@@ -168,6 +168,20 @@ CREATE TABLE IF NOT EXISTS ai_interaction_log (
     tools_used  TEXT,
     response_summary TEXT
 );
+
+-- ── Chart Inferences (Persistent LLM Insights per Visualization) ───────────
+CREATE TABLE IF NOT EXISTS chart_inferences (
+    inference_id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    chart_key       TEXT NOT NULL,
+    data_hash       TEXT NOT NULL,
+    title           TEXT NOT NULL,
+    inference_text  TEXT NOT NULL,
+    key_takeaway    TEXT,
+    impact_level    TEXT DEFAULT 'info',  -- positive, warning, danger, info
+    generated_at    TEXT,
+    source          TEXT DEFAULT 'llm'    -- baseline, llm, rule_engine
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chart_data_hash ON chart_inferences(chart_key, data_hash);
 """
 
 

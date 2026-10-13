@@ -11,14 +11,14 @@ from analytics.sales import get_sales_trend
 from config.settings import FORECAST_PERIODS
 from views.ui_utils import (
     section_header, fmt_currency, fmt_number,
-    chart_layout, COLORS, empty_state, alert_banner,
+    chart_layout, COLORS, empty_state, alert_banner, render_inference_card,
 )
 
 
 def render(filters: dict):
     st.markdown("## Advanced Analytics")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Forecasting, anomaly detection and trend analysis</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Forecasting, anomaly detection and trend analysis with AI inferences</p>',
         unsafe_allow_html=True,
     )
 
@@ -110,6 +110,7 @@ def render(filters: dict):
                     lambda v: f"{int(v):,}"
                 )
             st.dataframe(disp, use_container_width=True, hide_index=True)
+            render_inference_card("analytics_forecast", "Time-Series Predictive Demand Trend")
 
     # ─────────────── ANOMALY DETECTION ──────────────────────────────────────────
     with tab2:
@@ -188,3 +189,6 @@ def render(filters: dict):
                 }),
                 use_container_width=True, hide_index=True,
             )
+
+            render_inference_card("analytics_anomalies", "Statistical Outliers & Operational Flags")
+

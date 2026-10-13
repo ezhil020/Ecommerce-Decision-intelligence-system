@@ -170,9 +170,18 @@ def load_all(progress_callback=None) -> dict:
     finally:
         conn.close()
 
+    _progress("Synchronizing AI chart inferences for new data…", 95)
+    try:
+        from analytics.inferences import refresh_all_chart_inferences
+        inf_count = refresh_all_chart_inferences()
+        summary["inferences_refreshed"] = inf_count
+    except Exception as e:
+        logger.warning("Could not auto-refresh inferences during load: %s", e)
+
     _progress("Done!", 100)
     logger.info("ETL complete: %s", summary["rows_loaded"])
     return summary
+
 
 
 def _df_to_sql(df: pd.DataFrame, table: str, conn, columns: list):

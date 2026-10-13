@@ -12,14 +12,14 @@ from analytics.customers import (
 )
 from views.ui_utils import (
     kpi_card, section_header, fmt_currency, fmt_number,
-    chart_layout, COLORS, CATEGORY_COLORS, empty_state,
+    chart_layout, COLORS, CATEGORY_COLORS, empty_state, render_inference_card,
 )
 
 
 def render(filters: dict):
     st.markdown("## Customer Intelligence")
     st.markdown(
-        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Behavioral segmentation, channel preference and geographic analysis</p>',
+        '<p style="color:#64748b;font-size:0.85rem;margin-top:-12px">Behavioral segmentation, channel preference and geographic analysis with AI inferences</p>',
         unsafe_allow_html=True,
     )
 
@@ -36,7 +36,10 @@ def render(filters: dict):
         with col:
             kpi_card(title, val, icon=icon, accent=accent)
 
+    render_inference_card("customers_kpis", "Customer Base Foundation")
+
     st.markdown("---")
+
 
     # ── Segmentation ──────────────────────────────────────────────────────────
     section_header("Customer Behavioral Segmentation",
@@ -91,6 +94,8 @@ def render(filters: dict):
             use_container_width=True, hide_index=True,
         )
 
+        render_inference_card("customers_segmentation", "Behavioral Segmentation & Concentration")
+
     st.markdown("---")
 
     # ── Channel & Membership ──────────────────────────────────────────────────
@@ -127,6 +132,8 @@ def render(filters: dict):
             ))
             chart_layout(fig4, "Revenue by Membership Tier", height=280)
             st.plotly_chart(fig4, use_container_width=True)
+
+        render_inference_card("customers_device_membership", "Mobile App Adoption & Membership Loyalty")
 
     st.markdown("---")
 
@@ -186,6 +193,7 @@ def render(filters: dict):
         ))
         chart_layout(fig7, "Top States by Revenue", height=340)
         st.plotly_chart(fig7, use_container_width=True)
+        render_inference_card("customers_geo", "Geographic Demand Clusters")
 
         # Top customers table
         section_header("Top Customers by Revenue")
@@ -203,3 +211,4 @@ def render(filters: dict):
                 }),
                 use_container_width=True, hide_index=True,
             )
+

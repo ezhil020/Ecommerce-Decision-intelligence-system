@@ -168,3 +168,89 @@ margin:8px 0;color:#e2e8f0;font-size:0.85rem;
 ">{msg}</div>
 """
     st.markdown(html, unsafe_allow_html=True)
+
+
+# ── AI Chart Inference Card ───────────────────────────────────────────────────
+
+def render_inference_card(
+    chart_key: str,
+    title: str = "",
+    summary_data: dict = None,
+    compact: bool = False,
+):
+    """
+    Renders an executive-grade AI business inference card attached to a chart or dashboard element.
+    Backed by persistent SQLite storage linked to data version fingerprint.
+    """
+    from analytics.inferences import get_chart_inference
+
+    inf = get_chart_inference(chart_key, title, summary_data)
+    if not inf:
+        return
+
+    impact = inf.get("impact_level", "info")
+    theme = {
+        "positive": {
+            "border": "#10b981",
+            "bg": "rgba(16, 185, 129, 0.06)",
+            "pill_bg": "rgba(16, 185, 129, 0.18)",
+            "pill_color": "#6ee7b7",
+            "pill_text": "🟢 Strong Momentum",
+        },
+        "warning": {
+            "border": "#f59e0b",
+            "bg": "rgba(245, 158, 11, 0.06)",
+            "pill_bg": "rgba(245, 158, 11, 0.18)",
+            "pill_color": "#fde68a",
+            "pill_text": "🟡 Attention Needed",
+        },
+        "danger": {
+            "border": "#ef4444",
+            "bg": "rgba(239, 68, 68, 0.08)",
+            "pill_bg": "rgba(239, 68, 68, 0.2)",
+            "pill_color": "#fca5a5",
+            "pill_text": "🔴 High Risk / Deficit",
+        },
+        "info": {
+            "border": "#6366f1",
+            "bg": "rgba(99, 102, 241, 0.06)",
+            "pill_bg": "rgba(99, 102, 241, 0.18)",
+            "pill_color": "#c7d2fe",
+            "pill_text": "🔵 Key Pattern",
+        },
+    }.get(impact, {
+        "border": "#6366f1",
+        "bg": "rgba(99, 102, 241, 0.06)",
+        "pill_bg": "rgba(99, 102, 241, 0.18)",
+        "pill_color": "#c7d2fe",
+        "pill_text": "🔵 Pattern",
+    })
+
+    source_label = inf.get("source", "llm")
+    data_hash_short = inf.get("data_hash", "v1")[:8]
+    margin_bottom = "8px" if compact else "16px"
+    font_size = "0.82rem" if compact else "0.86rem"
+
+    subtitle_text = f" • {inf.get('title')}" if inf.get("title") and not compact else ""
+    takeaway_html = ""
+    if inf.get("key_takeaway"):
+        takeaway_html = f"""<div style="margin-top:6px;padding-top:5px;border-top:1px dashed rgba(255,255,255,0.08);color:#cbd5e1;font-size:0.78rem;display:flex;align-items:baseline;gap:5px;"><span style="font-weight:600;color:{theme['border']};">🎯 Strategic Action:</span><span>{inf.get('key_takeaway')}</span></div>"""
+
+    html = f"""<div style="background:{theme['bg']};border:1px solid rgba(255,255,255,0.08);border-left:3px solid {theme['border']};border-radius:8px;padding:10px 14px;margin-top:6px;margin-bottom:{margin_bottom};box-shadow:0 2px 10px rgba(0,0,0,0.2);">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+<div style="display:flex;align-items:center;gap:6px;">
+<span style="font-size:0.95rem;">💡</span>
+<span style="font-size:0.76rem;font-weight:700;color:#e2e8f0;letter-spacing:0.04em;text-transform:uppercase;">AI Business Inference{subtitle_text}</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;">
+<span style="background:{theme['pill_bg']};color:{theme['pill_color']};font-size:0.68rem;font-weight:600;padding:1px 7px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">{theme['pill_text']}</span>
+<span style="background:rgba(255,255,255,0.05);color:#94a3b8;font-size:0.65rem;padding:1px 6px;border-radius:6px;">Data: {data_hash_short}</span>
+</div>
+</div>
+<div style="color:#f1f5f9;font-size:{font_size};line-height:1.45;font-weight:400;">
+{inf.get('inference_text', '')}
+</div>
+{takeaway_html}
+</div>"""
+    st.markdown(html, unsafe_allow_html=True)
+
